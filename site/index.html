@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>World Dashboard</title>
+  <meta name="description" content="The state of the world at a glance: global indicators for the planet, people, economy and conflict.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header__main">
+      <h1 class="site-title">World Dashboard</h1>
+      <p class="site-meta">Data as of <time id="data-date">…</time></p>
+    </div>
+    <div class="site-header__icons" aria-hidden="true">
+      <span class="icon" title="Language (coming later)">🌐</span>
+      <span class="icon" title="Edit (coming later)">✏️</span>
+      <span class="icon" title="Account (coming later)">👤</span>
+    </div>
+  </header>
+
+  <main id="dashboard" class="dashboard" aria-live="polite">
+    <p class="dashboard__loading">Loading data…</p>
+  </main>
+
+  <template id="tile-template">
+    <article class="tile">
+      <h3 class="tile__title"></h3>
+      <p class="tile__subtitle"></p>
+      <p class="tile__value"><span class="tile__number"></span><span class="tile__unit"></span></p>
+      <div class="tile__chart"><canvas aria-hidden="true"></canvas></div>
+      <footer class="tile__footer">
+        <p class="tile__when"><span class="tile__cadence"></span> · <time class="tile__date"></time></p>
+        <p class="tile__source">Source: <a class="tile__source-link" target="_blank" rel="noopener noreferrer"></a></p>
+      </footer>
+    </article>
+  </template>
+
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -11,21 +11,21 @@
 
 ## 2. Page skeleton and vendored chart library
 
-- [ ] 2.1 Vendor the pinned Chart.js 4 UMD build as `site/vendor/chart.umd.min.js`, keeping its licence header. Verify: the file loads in a blank page with `window.Chart` defined.
-- [ ] 2.2 Add the `site/data -> ../data` symlink and `.gitignore` (`_site/`, `.DS_Store`). Remove the committed `.DS_Store` files. Verify: `python -m http.server` in `site/` serves `/data/mock-data.json`.
-- [ ] 2.3 Create `site/index.html` (header, main, tile `<template>`, no external URLs) and `site/styles.css` (all colours as `:root` variables, light mode, system font stack). Verify: `grep -rE 'https?://' site/ --exclude-dir=vendor` finds no asset URLs.
+- [x] 2.1 Vendor the pinned Chart.js 4 UMD build as `site/vendor/chart.umd.min.js`, keeping its licence header. Verify: the file loads in a blank page with `window.Chart` defined.
+- [x] 2.2 Add the `site/data -> ../data` symlink and `.gitignore` (`_site/`, `.DS_Store`). Remove the committed `.DS_Store` files. Verify: `python -m http.server` in `site/` serves `/data/mock-data.json`.
+- [x] 2.3 Create `site/index.html` (header, main, tile `<template>`, no external URLs) and `site/styles.css` (all colours as `:root` variables, light mode, system font stack). Verify: `grep -rE 'https?://' site/ --exclude-dir=vendor` finds no asset URLs.
 
 ## 3. Rendering
 
-- [ ] 3.1 Write `site/app.js`: load the data, render the header (title, latest `as_of`, inert 🌐 ✏️ 👤 icons) and category groups in `categories` order. Verify: the local page shows six headings in the right order.
-- [ ] 3.2 Render the identical tiles: title, definition, formatted value plus unit, footer with frequency, date and source link (`target="_blank" rel="noopener"`). Verify: 13 tiles, with values that match the last series points.
-- [ ] 3.3 Draw the mini charts: last 365 days for daily tiles, full series for annual tiles, the same `--chart-line` colour, no axes or tooltips, no animation. Verify: every tile shows a line, and the temperature tile shows about 12 months.
-- [ ] 3.4 Add the empty dashed slot at the end of the last group, and the "data could not be loaded" message for a failed load. Verify: the slot appears after Demography, and with the data file renamed the message shows and there are no uncaught errors.
-- [ ] 3.5 Make the layout responsive: fixed-size tiles, wrapping groups, no horizontal scroll at 360 px. Verify: screenshots at 1440 px and 390 px look like the wireframe, and the tile text doesn't overflow.
+- [x] 3.1 Write `site/app.js`: load the data, render the header (title, latest `as_of`, inert 🌐 ✏️ 👤 icons) and category groups in `categories` order. Verify: the local page shows six headings in the right order.
+- [x] 3.2 Render the identical tiles: title, definition, formatted value plus unit, footer with frequency, date and source link (`target="_blank" rel="noopener"`). Verify: 13 tiles, with values that match the last series points.
+- [x] 3.3 Draw the mini charts: last 365 days for daily tiles, full series for annual tiles, the same `--chart-line` colour, no axes or tooltips, no animation. Verify: every tile shows a line, and the temperature tile shows about 12 months.
+- [x] 3.4 Add the empty dashed slot at the end of the last group, and the "data could not be loaded" message for a failed load. Verify: the slot appears after Demography, and with the data file renamed the message shows and there are no uncaught errors.
+- [x] 3.5 Make the layout responsive: fixed-size tiles, wrapping groups, no horizontal scroll at 360 px. Verify: screenshots at 1440 px and 390 px look like the wireframe, and the tile text doesn't overflow.
 
 ## 4. Smoke check
 
-- [ ] 4.1 Write `tests/smoke_page.mjs <url>`. It checks:
+- [x] 4.1 Write `tests/smoke_page.mjs <url>`. It checks:
   - 13 tiles;
   - no console errors;
   - every request goes to the page's own origin and no cookies are set;
