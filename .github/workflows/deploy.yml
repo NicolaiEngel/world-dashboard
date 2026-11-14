@@ -1,5 +1,5 @@
 # MVP deploy: test, fetch real data, then publish site/ (plus the data files) to GitHub Pages
-# on every push to main.
+# on every push to main, once a day (05:17 UTC), and on manual dispatch.
 # One-time repo setting: Settings -> Pages -> Source: "GitHub Actions".
 # After the MVP this is replaced by build-and-deploy.yml (see CLAUDE.md, Architecture).
 name: Deploy to GitHub Pages
@@ -7,6 +7,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: "17 5 * * *"   # daily refresh, off-peak minute
   workflow_dispatch:
 
 permissions:
@@ -41,10 +43,16 @@ jobs:
       - name: Test pipeline (recorded fixtures, no network)
         run: python -m pytest -q
 
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
       - name: Fetch real data
-        # Never fails the deploy for a source error: failed indicators keep their mock data.
-        # The per-indicator summary goes to the job summary.
-        run: python -m pipeline.run --out data/dashboard.json
+        # Never fails the deploy for a source error: a failed indicator keeps the last
+        # published real data (last-good), else its mock data. Summary -> job summary.
+        run: >-
+          python -m pipeline.run --out data/dashboard.json
+          --last-good "${{ steps.pages.outputs.base_url }}/data/dashboard.json"
 
       - name: Assemble site
         # -L follows the site/data -> ../data symlink, so the data file is copied in for real.
@@ -54,9 +62,6 @@ jobs:
           test -f _site/index.html
           test -f _site/data/mock-data.json && test -f _site/data/dashboard.json && test ! -L _site/data
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
       - name: Upload site
         uses: actions/upload-pages-artifact@v4
         with:
@@ -65,3 +70,18 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+
+  # Keeps the daily schedule from being disabled after 60 days without repository activity.
+  # Opt-in per repository (Settings -> Secrets and variables -> Actions -> Variables:
+  # KEEPALIVE = true), so forks don't inherit it. Uses the API with the built-in token;
+  # no commits. GitHub doesn't document that re-enabling resets the timer: see DECISIONS.md.
+  keepalive:
+    if: vars.KEEPALIVE == 'true' && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Keep the scheduled workflow enabled
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/deploy.yml/enable"
