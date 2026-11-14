@@ -25,7 +25,7 @@ An indicator SHALL be fetched only from a source whose published terms were read
 - **THEN** `DECISIONS.md` lists its source with the terms URL, the quote, the licence and the attribution
 
 ### Requirement: Required attribution is visible on the tile
-For each fetched indicator, `source.name` SHALL contain the attribution its licence requires, for example "Copernicus Climate Change Service (C3S)", "ECB via Frankfurter" or "CoinGecko". `source.url` SHALL point to the source. The tile shows both through its existing source link.
+For each fetched indicator, `source.name` SHALL contain the attribution its licence requires, for example "Copernicus Climate Change Service (C3S)", "ECB via Frankfurter" or "World Bank". `source.url` SHALL point to the source. The tile shows both through its existing source link.
 
 #### Scenario: Copernicus attribution
 - **WHEN** `temp_anomaly` is real
@@ -56,15 +56,8 @@ If an indicator's fetch fails, times out, returns an empty series, or has a late
 - **WHEN** a fetched latest value lies outside the indicator's configured min–max range
 - **THEN** the indicator keeps its mock entry, and the log reports a range-check failure
 
-### Requirement: Estimates are labelled, projections are dropped
-For sources that publish estimates and projections, such as the IMF WEO, the series SHALL end at the current calendar year. If the latest year is an estimate, the entry's `caveat` SHALL say so and name the edition (for example "2026 is an IMF estimate (WEO October 2026)"). Years after the current one SHALL NOT be stored.
-
-#### Scenario: IMF series cut-off
-- **WHEN** the IMF DataMapper returns values from 1980 to 2031 and the current year is 2026
-- **THEN** the stored series runs 1980–2026, `as_of` is "2026", and the caveat names 2026 as an IMF estimate with the WEO edition
-
 ### Requirement: Series windows and dates
-Daily indicators SHALL store about the last 2 years of daily points with `YYYY-MM-DD` dates, or the last year where the free source offers no more (CoinGecko keyless). Annual indicators SHALL store their full available history with `YYYY` dates. Series SHALL be sorted oldest first, with no null values.
+Daily indicators SHALL store about the last 2 years of daily points with `YYYY-MM-DD` dates. Annual indicators SHALL store their full available history with `YYYY` dates. Series SHALL be sorted oldest first, with no null values.
 
 #### Scenario: Gaps are skipped
 - **WHEN** a source reports a missing or flagged daily value (for example a NOAA `-999.99`)

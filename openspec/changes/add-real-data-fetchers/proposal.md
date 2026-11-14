@@ -19,8 +19,8 @@ All 13 tiles still show mock numbers. Step 4 replaces them with values fetched f
   | `co2_ppm` | NOAA GML Mauna Loa daily means |
   | `conflict_deaths` | Our World in Data (UCDP-based chart, UCDP data CC BY 4.0), skipped if `nonRedistributable` |
   | `eur_usd`, `usd_cny` | Frankfurter, ECB provider (ECB: free use if the ECB is cited); USD/CNY = (EUR/CNY) ÷ (EUR/USD) |
-  | `btc_usd` | CoinGecko keyless API, daily closes for the last 365 days, with the required CoinGecko attribution. Replaces Coinbase, whose market-data terms couldn't be confirmed |
-  | `gdp_growth_advanced`, `gdp_growth_developing` (**replace `msci_world`, `msci_em`**) | IMF World Economic Outlook via the keyless DataMapper API: real GDP growth (`NGDP_RPCH`) for "Advanced economies" (`ADVEC`) and "Emerging market and developing economies" (`OEMDC`), annual from 1980 up to the current year. The current year is an IMF estimate, so the caveat says so and names the WEO edition. Later projection years are dropped. Subject to the licence gate |
+  | `btc_usd` | **Stays MOCK for now.** CoinGecko allows display with "Powered by CoinGecko", but its API terms discourage storing its data (refresh within 24 h, encryption, no copying beyond what's permitted) and require a user agreement plus a privacy policy with specific clauses. To be revisited once the daily refresh and the site's legal pages exist. Coinbase isn't used (terms not confirmed) |
+  | `gdp_growth_advanced`, `gdp_growth_developing` (**replace `msci_world`, `msci_em`**) | World Bank GDP growth (`NY.GDP.MKTP.KD.ZG`) for the aggregates "High income" (`HIC`) and "Low & middle income" (`LMY`), annual, through the same World Bank fetcher (CC BY 4.0, to be confirmed). The IMF WEO (advanced vs emerging & developing, with a current-year estimate) is the later upgrade: its terms allow display with attribution, but systematic or automated downloading needs the IMF's permission |
 
 - **Deploy runs the fetchers:** `deploy.yml` runs the fetch step before publishing, because GitHub runners have open internet. The fetchers also run by hand (`python -m pipeline.run`). The generated file isn't committed.
 - **The page** reads `data/dashboard.json` and falls back to `data/mock-data.json` if it's missing (for example, a local preview without fetching).
@@ -29,8 +29,8 @@ All 13 tiles still show mock numbers. Step 4 replaces them with values fetched f
   - Once switched on, it updates EUR/USD and USD/CNY, with "Real-time · HH:MM" in the tile footer.
   - The setting is remembered in `localStorage` and can be switched off.
   - Nothing outside our site is contacted until the visitor clicks.
-  - **Bitcoin isn't real-time:** CLAUDE.md rules out CoinGecko in the browser, and Coinbase's terms couldn't be confirmed. Bitcoin shows the daily close from the deploy.
-- **MSCI tiles replaced:** MSCI's terms forbid redistribution without written consent, so the two MSCI tiles become the two IMF GDP-growth tiles. In the mock data and the generator, `msci_world` / `msci_em` become `gdp_growth_advanced` ("Advanced economies") and `gdp_growth_developing` ("Emerging & developing"). Subtitle "Real GDP growth, % per year", category Economy, cadence annual, unit "%", 1 decimal. Economy then has two annual and three daily tiles.
+  - **Bitcoin isn't real-time** (and stays mock for now; see the sources table).
+- **MSCI tiles replaced:** MSCI's terms forbid redistribution without written consent, so the two MSCI tiles become two GDP-growth tiles. In the mock data and the generator, `msci_world` / `msci_em` become `gdp_growth_advanced` (title "High-income economies") and `gdp_growth_developing` (title "Low & middle income"). Subtitle "Real GDP growth, % per year", category Economy, cadence annual, unit "%", 1 decimal. The ids stay neutral, so a later switch to the IMF's groups needs no id change.
 - **Tests:** `pytest` for every fetcher and the runner, using small fixtures recorded from real responses (never invented). Range checks for each indicator.
 
 ## Capabilities
@@ -56,7 +56,7 @@ All 13 tiles still show mock numbers. Step 4 replaces them with values fetched f
 - **Changed:** `scripts/make_mock_data.py` and `data/mock-data.json` (two MSCI entries replaced by the two GDP-growth entries), `site/app.js`, `site/index.html`, `site/styles.css`, `.github/workflows/deploy.yml`, `.gitignore`, `DECISIONS.md`, `README.md`.
 - **Network:** these hosts are needed to record fixtures and check endpoints:
   - `api.worldbank.org`, `ourworldindata.org`, `gml.noaa.gov`, `pulse.climate.copernicus.eu`;
-  - `api.frankfurter.dev`, `api.coingecko.com`, `www.imf.org` (still to be added).
+  - `api.frankfurter.dev`.
 
   These, plus the terms pages, are already allowed in the `world-dashboard` environment. The Climate Pulse CSV host may need adding once it's found.
 
