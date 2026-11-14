@@ -201,7 +201,7 @@ data = {
     "mock": True,
     "note": "ILLUSTRATIVE MOCK DATA – plausible shapes, not real values. Replace per indicator with real fetchers.",
     "change_reference": {"daily": "previous day", "monthly": "same month last year", "annual": "10 years earlier"},
-    "categories": ["Climate", "Health", "Living standards", "Stability", "Economy", "Demography"],
+    "categories": ["Economy", "Climate", "Health", "Living standards", "Stability", "Demography"],
     "indicators": indicators,
 }
 

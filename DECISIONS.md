@@ -4,6 +4,11 @@ Source choices, fallbacks in use, and open questions. Newest entries go at the t
 
 ## Decisions
 
+### Economy first, no header date (2026-11-14)
+
+- **Category order:** Economy, Climate, Health, Living standards, Stability, Demography. Economy holds the tiles that change between visits, so it comes first. This departs from the wireframe's row plan, which put it second; CLAUDE.md is updated to match.
+- **No header date:** "Data as of …" is removed from the header. Every tile shows its own date, and one page-wide date was misleading when tiles range from yesterday to 2022. The header keeps the title and the placeholder icons.
+
 ### Tile revisions: MOCK badge, chart axes, no placeholder (2026-11-14)
 
 - **MOCK badge, moved forward from step 3.**
@@ -47,6 +52,22 @@ Source choices, fallbacks in use, and open questions. Newest entries go at the t
   - Titles and definitions may wrap onto two lines, and a long unit drops below the number. Nothing is cut off, except long source names in the footer, which end with "…" and stay clickable.
   - An empty dashed slot after the last group stands for later indicators.
 - **Header date** = the most recent `as_of` across all indicators.
+
+## Data sources and licences
+
+The licence gate (see CLAUDE.md, "Licence-cleared sources only"). Checked 2026-11-14; the rest gets completed in `add-real-data-fetchers`.
+
+| Source | Used for | Status | Required attribution | Evidence |
+|---|---|---|---|---|
+| ECB reference rates via Frankfurter | `eur_usd`, `usd_cny` | ✓ | Cite the ECB as the source | [ECB disclaimer](https://www.ecb.europa.eu/services/disclaimer/html/index.en.html): "users of this website may make free use of the information … the ECB must be cited as the source." [Frankfurter](https://frankfurter.dev): free, including commercial use; provider queries are "subject to each provider's terms" |
+| UCDP via Our World in Data | `conflict_deaths` | ✓ | UCDP and OWID | [UCDP downloads](https://ucdp.uu.se/downloads/): "All datasets are free of charge and licensed under CC BY 4." [OWID FAQ](https://ourworldindata.org/faqs): charts are CC BY; respect third-party terms |
+| CoinGecko (keyless API) | `btc_usd` | ✓, browser confirmation of the full API terms pending | "CoinGecko", with a link | [Keyless API docs](https://docs.coingecko.com/docs/keyless-public-api): "If you display data from CoinGecko … keyless endpoints in your … website … you are required to provide appropriate attribution." The API terms page blocks automated reads (403) |
+| IMF World Economic Outlook | `gdp_growth_advanced`, `gdp_growth_developing` | ✓ with attribution, browser confirmation pending | "Source: International Monetary Fund, World Economic Outlook database" | [IMF Copyright and Usage](https://www.imf.org/en/about/copyright-and-terms), read via search excerpts because imf.org blocks automated reads (403): statistical data may be "downloaded, copied, adapted, published, and distributed" with attribution; altered data must be flagged; commercial reuse needs permission. **Caveats:** "bulk downloads by automated means" need permission, and the DataMapper API refused a request from the dev container. Test from a GitHub runner; the fallback is World Bank GDP growth (HIC/LMY, CC BY 4.0) |
+| World Bank | 5 annual tiles | To confirm per indicator | — | Site terms defer to the Data Catalog's dataset licence |
+| Copernicus Climate Pulse | `temp_anomaly` | To confirm | Copernicus Climate Change Service | — |
+| NOAA GML | `co2_ppm` | To confirm | — | — |
+| MSCI index levels | (dropped) | ✗ | — | [MSCI index terms](https://www.msci.com/legal/index-terms): "Reproduction, redistribution or any other form of copying or transmission of the Data without MSCI's prior written consent is strictly prohibited." |
+| Coinbase market data | (not used) | ✗ not confirmed | — | The terms page blocks automated reads (403); an older version restricted display to third parties |
 
 ## Fallbacks in use
 
