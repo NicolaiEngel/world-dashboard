@@ -9,6 +9,6 @@ The mock data SHALL contain exactly these indicators: `temp_anomaly`, `co2_ppm`,
 - **WHEN** the data file is loaded
 - **THEN** it lists 13 indicators, each with `mock` set to `true`
 
-#### Scenario: MSCI replaced by IMF GDP growth
+#### Scenario: MSCI replaced by GDP growth
 - **WHEN** the Economy indicators are listed
 - **THEN** they are `gdp_growth_advanced`, `gdp_growth_developing`, `eur_usd`, `usd_cny` and `btc_usd`. The two GDP entries are annual, with unit "%", and neither `msci_world` nor `msci_em` exists

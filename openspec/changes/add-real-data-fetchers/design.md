@@ -33,8 +33,6 @@ pipeline/
     noaa_gml.py     # Mauna Loa daily CSV; drop -999.99 rows
     copernicus.py   # Climate Pulse daily global 2 m temperature anomaly CSV
     frankfurter.py  # ECB provider only, range query, base EUR, symbols USD,CNY
-    coingecko.py    # keyless /coins/bitcoin/market_chart?vs_currency=usd&days=365&interval=daily
-    imf.py          # DataMapper /api/v1/NGDP_RPCH/ADVEC/OEMDC, one call for both groups
 tests/
   fixtures/<source>/*  # trimmed real responses, recorded once
   test_<source>.py, test_run.py
@@ -61,11 +59,11 @@ tests/
   |---|---|
   | ECB via Frankfurter | ✓ ECB: "users … may make free use of the information … the ECB must be cited as the source." Frankfurter: free, including commercial use; direct provider queries are "subject to each provider's terms" (ECB) |
   | UCDP via OWID | ✓ UCDP: "All datasets are free of charge and licensed under CC BY 4". OWID charts are CC BY, and OWID asks users to respect third-party terms |
-  | CoinGecko (keyless) | ✓ with caveat. Docs: "If you display data from CoinGecko … keyless endpoints in your … website … you are required to provide appropriate attribution." The full API terms page refused automated access (403), so you should read it once in a browser before the tile goes real |
+  | CoinGecko | Display allowed with "Powered by CoinGecko", but the storage (§6) and user-agreement (§7) conditions aren't met yet → not used now (terms read from your PDF, 5 Sept 2025) |
   | World Bank | To confirm per indicator. The site terms defer to the Data Catalog's dataset licence (WDI is listed as CC BY 4.0) |
   | Copernicus Climate Pulse | To confirm. The CDS licence list includes CC BY 4.0, but the Climate Pulse page is a script-rendered app; the licence and attribution come from its data page or CSV header |
   | NOAA GML | To confirm from the CSV header's data-use statement |
-  | IMF World Economic Outlook | ✓ with attribution, read via search excerpts because `www.imf.org` returns 403 to automated reads, so you should confirm the page once in a browser. [Copyright and Usage](https://www.imf.org/en/about/copyright-and-terms): statistical data may be "downloaded, copied, adapted, published, and distributed", crediting "Source: International Monetary Fund, <database name>". Altered data must be flagged; commercial reuse needs permission (copyright@imf.org). Caveats: "bulk downloads by automated means" need permission, and the DataMapper API returned 403 to an honestly identified request from this container (14 Nov 2026) |
+  | IMF World Economic Outlook | Display ✓ with attribution; systematic or automated downloading needs IMF permission → not used now (terms read from your PDF, effective 11 Oct 2024) |
   | MSCI index levels | ✗ "Reproduction, redistribution or any other form of copying or transmission of the Data without MSCI's prior written consent is strictly prohibited." The MSCI Index API is a licensed product. Tiles replaced by IMF GDP growth |
   | Coinbase | ✗ not confirmed: the terms page returns 403 to automated reads, and older terms restricted display to third parties. Not used |
 
@@ -92,19 +90,14 @@ tests/
   - `eur_usd` = USD.
   - `usd_cny` = CNY ÷ USD, rounded to 4 decimals.
   - Source "ECB via Frankfurter", URL `https://frankfurter.dev`.
-- **CoinGecko:**
-  - Keyless `market_chart`, 365 days, daily closes (about 1 call per deploy, well within the roughly 5 calls/min keyless limit).
-  - Source "CoinGecko", linked to the Bitcoin page, as its attribution guide asks.
-- **IMF GDP growth (replaces the MSCI tiles):**
-  - One DataMapper request returns `NGDP_RPCH` for `ADVEC` and `OEMDC`, keyed by year.
-  - Keep years ≤ the current year and drop nulls.
-  - The WEO edition (for example "October 2026") is read from the API's metadata if it's there. Otherwise it's derived from the publication schedule and stated as such in `DECISIONS.md`.
-  - Caveat: "<year> is an IMF estimate (WEO <edition>)."
-  - Source "International Monetary Fund, World Economic Outlook database" (the IMF's required attribution form), linked to the DataMapper indicator page. The caveat notes that the data is rounded and cut at the current year (the "altered data" condition).
-  - **Access:** one small request per deploy. If the GitHub runner is also refused (403), the tiles switch to the World Bank fallback below. No bot-protection workarounds.
-  - Range check −15…+20 %.
-  - **Mock data:** the generator replaces the two MSCI entries with plausible annual series from 1980 to 2026 (advanced about 1–3 %, developing about 3–6 %, with a 2009 and 2020 dip), using the existing shared random stream rules. The other series stay byte-identical: the old MSCI draws keep running, just unused, the same trick as for the annual temperature.
-  - **Rejected:** World Bank income groups (no current-year estimate) and CPB industrial production (licence unclear). Both are recorded in `DECISIONS.md` as alternatives.
+- **GDP growth (replaces the MSCI tiles), decided 14 Nov 2026:**
+  - World Bank `NY.GDP.MKTP.KD.ZG` for `HIC` (`gdp_growth_advanced`, "High-income economies") and `LMY` (`gdp_growth_developing`, "Low & middle income"), through `world_bank.py` like the five other World Bank tiles.
+  - Annual, full history; range check −15…+20 %.
+  - **Mock data:** the generator replaces the two MSCI entries with plausible annual mock series from 1980 to 2025 (high income about 1–3 %, low & middle income about 3–6 %, with dips in 2009 and 2020). They use their own seeded random generator, and the old MSCI draws keep running unused, so the other 11 series stay byte-identical.
+  - **Later upgrade (not in this change):** IMF WEO (advanced vs emerging & developing, with a current-year estimate), once the IMF permits systematic downloads. Its terms (effective 11 Oct 2024) allow display with the attribution "Source: International Monetary Fund, World Economic Outlook database, <link>"; but "Permission is required to copy or download IMF Content in any systematic way", and imf.org refused automated requests from the dev container.
+- **Bitcoin, decided 14 Nov 2026: stays mock.**
+  - CoinGecko's API terms (5 Sept 2025) allow display with "Powered by CoinGecko" (§4.3). But §6 discourages storing its data (refresh within 24 h, "strong encryption… should be applied", no duplicating or storing beyond what's permitted), and §7 requires a user agreement plus a privacy policy with specific clauses.
+  - No CoinGecko fetcher in this change. Revisit after `add-daily-refresh` and the site's legal pages.
 
 ### 5. Fetch at deploy; no data commits
 
@@ -141,10 +134,9 @@ tests/
 - [The Copernicus baseline offset is mis-cited] → Cite the C3S page and value in `DECISIONS.md`, and state it in the caveat. If unsure, keep the tile mocked.
 - [The container can't reach the sources] → Ask to allow the hosts listed in the proposal. If it's still blocked, verify via `workflow_dispatch` and record fixtures from the runner's output artifact.
 - [Real-time contacts third parties, under GDPR, from Germany] → Opt-in only, with the services named on the control. The privacy statement comes in the "before going public" step.
-- [IMF blocks automated access from GitHub runners too, or you prefer to avoid the automated-download clause] → Switch to World Bank GDP growth by income group (`NY.GDP.MKTP.KD.ZG`, `HIC` / `LMY`, CC BY 4.0) through the existing World Bank fetcher; tile wording becomes "High income" / "Low & middle income". Optionally ask copyright@imf.org once.
+- [The IMF later grants permission] → Switch the two GDP tiles to the IMF WEO groups in a small follow-up change; the ids stay the same.
 - [CLAUDE.md still lists the MSCI tiles] → Recorded in `DECISIONS.md`; you may want to update CLAUDE.md's indicator list.
-- [CoinGecko terms change or rate-limit the keyless pool] → One call per run; on a 429 or error the tile falls back like any other source.
 
 ## Open Questions
 
-- Your one-time browser read of CoinGecko's API terms before `btc_usd` goes real.
+- Whether Bitcoin should go real via CoinGecko once its storage and user-agreement conditions can be met.

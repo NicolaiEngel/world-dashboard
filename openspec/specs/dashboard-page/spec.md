@@ -18,18 +18,18 @@ The page SHALL build its category groups and tiles entirely from the data file. 
 - **THEN** the page renders a 14th tile with no code change
 
 ### Requirement: Header
-The page SHALL show a header with the title "World Dashboard" and the data date. The data date is the most recent `as_of` among the indicators. The header SHALL also show three placeholder icons (🌐 ✏️ 👤) that do nothing.
+The page SHALL show a header with the title "World Dashboard" and three placeholder icons (🌐 ✏️ 👤) that do nothing. The header SHALL NOT show a data date, because each tile shows its own date.
 
 #### Scenario: Header contents
 - **WHEN** the page has loaded
-- **THEN** the header shows "World Dashboard", the most recent `as_of` date, and three inert icons
+- **THEN** the header shows "World Dashboard" and three inert icons, and no "Data as of" text
 
 ### Requirement: Category groups
 Tiles SHALL be grouped under category headings, in the order of the data file's `categories` list. Within a category, tiles SHALL follow the order of the data file. A category with no indicators SHALL NOT be shown.
 
 #### Scenario: Category order
 - **WHEN** the page renders
-- **THEN** the headings appear as Climate, Health, Living standards, Stability, Economy, Demography, and Climate holds the temperature tile followed by the CO₂ tile
+- **THEN** the headings appear as Economy, Climate, Health, Living standards, Stability, Demography, and Climate holds the temperature tile followed by the CO₂ tile
 
 ### Requirement: Identical tile format
 Every tile SHALL have the same size and the same structure, in this order:

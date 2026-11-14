@@ -1,0 +1,140 @@
+[
+ {
+  "page": 1,
+  "pages": 1,
+  "per_page": 200,
+  "total": 66,
+  "sourceid": "2",
+  "lastupdated": "2026-11-11"
+ },
+ [
+  {
+   "indicator": {
+    "id": "SH.DYN.MORT",
+    "value": "Mortality rate, under-5 (per 1,000 live births)"
+   },
+   "country": {
+    "id": "1W",
+    "value": "World"
+   },
+   "countryiso3code": "WLD",
+   "date": "2025",
+   "value": null,
+   "unit": "",
+   "obs_status": "",
+   "decimal": 0
+  },
+  {
+   "indicator": {
+    "id": "SH.DYN.MORT",
+    "value": "Mortality rate, under-5 (per 1,000 live births)"
+   },
+   "country": {
+    "id": "1W",
+    "value": "World"
+   },
+   "countryiso3code": "WLD",
+   "date": "2024",
+   "value": 37.4,
+   "unit": "",
+   "obs_status": "",
+   "decimal": 0
+  },
+  {
+   "indicator": {
+    "id": "SH.DYN.MORT",
+    "value": "Mortality rate, under-5 (per 1,000 live births)"
+   },
+   "country": {
+    "id": "1W",
+    "value": "World"
+   },
+   "countryiso3code": "WLD",
+   "date": "2023",
+   "value": 38.3,
+   "unit": "",
+   "obs_status": "",
+   "decimal": 0
+  },
+  {
+   "indicator": {
+    "id": "SH.DYN.MORT",
+    "value": "Mortality rate, under-5 (per 1,000 live births)"
+   },
+   "country": {
+    "id": "1W",
+    "value": "World"
+   },
+   "countryiso3code": "WLD",
+   "date": "2022",
+   "value": 40,
+   "unit": "",
+   "obs_status": "",
+   "decimal": 0
+  },
+  {
+   "indicator": {
+    "id": "SH.DYN.MORT",
+    "value": "Mortality rate, under-5 (per 1,000 live births)"
+   },
+   "country": {
+    "id": "1W",
+    "value": "World"
+   },
+   "countryiso3code": "WLD",
+   "date": "2021",
+   "value": 39.6,
+   "unit": "",
+   "obs_status": "",
+   "decimal": 0
+  },
+  {
+   "indicator": {
+    "id": "SH.DYN.MORT",
+    "value": "Mortality rate, under-5 (per 1,000 live births)"
+   },
+   "country": {
+    "id": "1W",
+    "value": "World"
+   },
+   "countryiso3code": "WLD",
+   "date": "2020",
+   "value": 39.2,
+   "unit": "",
+   "obs_status": "",
+   "decimal": 0
+  },
+  {
+   "indicator": {
+    "id": "SH.DYN.MORT",
+    "value": "Mortality rate, under-5 (per 1,000 live births)"
+   },
+   "country": {
+    "id": "1W",
+    "value": "World"
+   },
+   "countryiso3code": "WLD",
+   "date": "2019",
+   "value": 39.6,
+   "unit": "",
+   "obs_status": "",
+   "decimal": 0
+  },
+  {
+   "indicator": {
+    "id": "SH.DYN.MORT",
+    "value": "Mortality rate, under-5 (per 1,000 live births)"
+   },
+   "country": {
+    "id": "1W",
+    "value": "World"
+   },
+   "countryiso3code": "WLD",
+   "date": "2018",
+   "value": 40,
+   "unit": "",
+   "obs_status": "",
+   "decimal": 0
+  }
+ ]
+]

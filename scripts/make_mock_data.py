@@ -94,6 +94,8 @@ for p in conflict:
 
 # ---------- daily layer ----------
 days = business_days(TODAY - timedelta(days=1))
+# The two MSCI walks are no longer published but still drawn, keeping the shared
+# random stream (and so the FX and Bitcoin series) byte-identical.
 msci_world = random_walk(days, 152.0, 168.0, 0.008, 2)
 msci_em = random_walk(days, 44.0, 49.5, 0.010, 2)
 eur_usd = random_walk(days, 1.10, 1.16, 0.004, 4)
@@ -140,6 +142,23 @@ def daily_co2(end):
 temp_daily = daily_temp(TODAY - timedelta(days=2))
 co2 = daily_co2(TODAY - timedelta(days=1))
 
+# ---------- GDP growth (replaces the MSCI tiles; MSCI data can't be redistributed) ----------
+# Own RNG again, so every other series stays byte-identical.
+grng = random.Random(1980)
+SHOCKS = {1982: -2.0, 1991: -1.0, 2009: -5.0, 2020: -6.0, 2021: 3.5}
+
+
+def gdp_growth(base, amp):
+    out = []
+    for y in range(1980, 2026):
+        v = base + amp * math.sin((y - 1980) / 4.5) + SHOCKS.get(y, 0) * (1 if base < 3 else 0.6) + grng.gauss(0, 0.4)
+        out.append({"date": str(y), "value": round(v, 1)})
+    return out
+
+
+gdp_high = gdp_growth(2.2, 0.6)
+gdp_lmic = gdp_growth(4.6, 0.8)
+
 
 def ind(id_, title, subtitle, category, cadence, unit, decimals, source, series, caveat=None):
     """One tile. All tiles share this shape; the UI renders them identically."""
@@ -161,7 +180,6 @@ def ind(id_, title, subtitle, category, cadence, unit, decimals, source, series,
 
 WB = lambda code: {"name": "World Bank", "code": code, "url": f"https://data.worldbank.org/indicator/{code}"}
 OWID = lambda url: {"name": "Our World in Data", "url": url}
-ETF_NOTE = "Tracking ETF used as proxy; MSCI index levels are not freely available."
 FRANKFURTER = {"name": "ECB via Frankfurter", "url": "https://www.frankfurter.app"}
 
 # Order = display order on the page
@@ -181,10 +199,12 @@ indicators = [
     ind("conflict_deaths", "Conflict deaths", "Battle-related deaths per year", "Stability", "annual",
         "deaths", 0, OWID("https://ourworldindata.org/war-and-peace"), conflict,
         "State-based conflicts (UCDP); excludes indirect deaths."),
-    ind("msci_world", "MSCI World", "URTH ETF price, USD", "Economy", "daily", "USD", 2,
-        {"name": "MSCI (ETF proxy)", "url": "https://www.msci.com/indexes"}, msci_world, ETF_NOTE),
-    ind("msci_em", "MSCI EM", "Emerging markets · EEM ETF price, USD", "Economy", "daily", "USD", 2,
-        {"name": "MSCI (ETF proxy)", "url": "https://www.msci.com/indexes"}, msci_em, ETF_NOTE),
+    ind("gdp_growth_advanced", "High-income economies", "Real GDP growth, % per year", "Economy", "annual",
+        "%", 1, WB("NY.GDP.MKTP.KD.ZG"), gdp_high,
+        "World Bank aggregate of high-income economies (income-group classification)."),
+    ind("gdp_growth_developing", "Low & middle income", "Real GDP growth, % per year", "Economy", "annual",
+        "%", 1, WB("NY.GDP.MKTP.KD.ZG"), gdp_lmic,
+        "World Bank aggregate of low- and middle-income economies (income-group classification)."),
     ind("eur_usd", "EUR/USD", "US dollars per euro", "Economy", "daily", "USD", 4, FRANKFURTER, eur_usd),
     ind("usd_cny", "USD/CNY", "Chinese yuan per US dollar", "Economy", "daily", "CNY", 4, FRANKFURTER, usd_cny),
     ind("btc_usd", "Bitcoin", "Price in US dollars", "Economy", "daily", "USD", 0,

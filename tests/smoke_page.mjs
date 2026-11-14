@@ -8,7 +8,7 @@
 //
 // Needs Playwright with Chromium (npm i -D playwright && npx playwright install chromium).
 import { createRequire } from "node:module";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
@@ -27,7 +27,13 @@ const check = (ok, msg) => {
 
 const browser = await chromium.launch();
 
-async function openPage(viewport, { blockData = false } = {}) {
+// Recorded real Frankfurter response (tests/fixtures), reduced to the latest day: the shape
+// of a "latest rates" answer. Real-time tests never contact Frankfurter itself.
+const fxRows = JSON.parse(readFileSync(new URL("./fixtures/frankfurter/rates_ecb.json", import.meta.url), "utf8"));
+const fxLatestDate = fxRows.map((r) => r.date).sort().at(-1);
+const FX_LATEST = fxRows.filter((r) => r.date === fxLatestDate);
+
+async function openPage(viewport, { blockData = false, blockFetched = false, fx = null, storage = null } = {}) {
   const context = await browser.newContext({ viewport });
   const page = await context.newPage();
   const log = { errors: [], pageErrors: [], foreign: [] };
@@ -37,6 +43,17 @@ async function openPage(viewport, { blockData = false } = {}) {
     const u = r.url();
     if (!u.startsWith("data:") && new URL(u).origin !== origin) log.foreign.push(u);
   });
+  if (storage) await context.addInitScript((kv) => { for (const [k, v] of Object.entries(kv)) localStorage.setItem(k, v); }, storage);
+  log.fx = 0;
+  await context.route("https://api.frankfurter.dev/**", (r) => {
+    log.fx++;
+    if (fx === "hang") return; // never answers: the page must time out on its own
+    return r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" },
+                       body: JSON.stringify(FX_LATEST) });
+  });
+  if (blockFetched || blockData) {
+    await page.route("**/data/dashboard.json", (r) => r.fulfill({ status: 404, body: "" }));
+  }
   if (blockData) {
     await page.route("**/data/mock-data.json", (r) => r.fulfill({ status: 404, body: "" }));
   }
@@ -48,7 +65,13 @@ async function openPage(viewport, { blockData = false } = {}) {
 // ---------- desktop ----------
 {
   const { context, page, log } = await openPage({ width: 1440, height: 1000 });
-  const data = await page.evaluate(async () => (await fetch("data/mock-data.json")).json());
+  // The data file the page actually used: fetched data if present, else the mock file.
+  const data = await page.evaluate(async () => {
+    for (const u of ["data/dashboard.json", "data/mock-data.json"]) {
+      const r = await fetch(u); if (r.ok) return r.json();
+    }
+  });
+  console.log(`      (data: ${data.indicators.filter((i) => !i.mock).length} of ${data.indicators.length} real)`);
 
   const tiles = await page.locator(".tile").count();
   check(tiles === EXPECTED_TILES, `${tiles} tiles rendered (expected ${EXPECTED_TILES})`);
@@ -167,6 +190,62 @@ async function openPage(viewport, { blockData = false } = {}) {
   check(axisIssues.length === 0, `phone: axis labels don't overlap or spill${axisIssues.length ? " (" + axisIssues.join("; ") + ")" : ""}`);
   check(log.pageErrors.length === 0, "phone: no uncaught errors");
   await page.screenshot({ path: `${outDir}/phone.png`, fullPage: true });
+  await context.close();
+}
+
+// ---------- real-time exchange rates (opt-in) ----------
+{
+  const { context, page, log } = await openPage({ width: 1440, height: 1000 });
+  const data = await page.evaluate(async () => (await fetch("data/dashboard.json")).ok
+    ? (await fetch("data/dashboard.json")).json() : (await fetch("data/mock-data.json")).json());
+  const fxReal = ["eur_usd", "usd_cny"].filter((id) => data.indicators.find((i) => i.id === id)?.mock === false);
+  const btn = page.locator("#realtime-toggle");
+  check(await btn.isVisible() && /Load real-time exchange rates \(connects to Frankfurter\)/.test(await btn.innerText()),
+    "real-time: opt-in control names Frankfurter");
+  check(log.fx === 0 && log.foreign.length === 0, "real-time: nothing outside our site before the click");
+  await btn.click();
+  await page.waitForTimeout(800);
+  check(log.fx === 1, `real-time: exactly one Frankfurter request after the click (${log.fx})`);
+  check(!log.foreign.some((u) => !u.startsWith("https://api.frankfurter.dev/")), "real-time: no other outside host (no Bitcoin request)");
+  const whens = await page.evaluate((ids) => ids.map((id) => document.querySelector(`.tile[data-id="${id}"] .tile__when`).innerText), fxReal);
+  check(fxReal.length === 0 || whens.every((w) => /^Real-time · \d\d:\d\d$/.test(w)),
+    `real-time: FX footers show "Real-time · HH:MM" (${whens.join(" | ") || "FX still mock: skipped"})`);
+  if (fxReal.includes("usd_cny")) {
+    const q = Object.fromEntries(FX_LATEST.map((r) => [r.quote, r.rate]));
+    const shown = await page.locator('.tile[data-id="usd_cny"] .tile__number').innerText();
+    check(shown === (q.CNY / q.USD).toFixed(4), `real-time: USD/CNY = CNY ÷ USD (${shown})`);
+  }
+  const btcWhen = await page.locator('.tile[data-id="btc_usd"] .tile__when').innerText();
+  check(!/Real-time/.test(btcWhen), "real-time: Bitcoin tile unaffected");
+  await btn.click();
+  const after = await page.evaluate((ids) => ids.map((id) => document.querySelector(`.tile[data-id="${id}"] .tile__when`).innerText), fxReal);
+  check(after.every((w) => !/Real-time/.test(w)), "real-time: switching off restores stored values");
+  check(log.pageErrors.length === 0, "real-time: no uncaught errors");
+  await context.close();
+}
+{
+  const { context, page, log } = await openPage({ width: 1024, height: 700 }, { storage: { "wd.realtime": "on" } });
+  await page.waitForTimeout(800);
+  check(log.fx === 1 && (await page.locator("#realtime-toggle").getAttribute("aria-pressed")) === "true",
+    "real-time: remembered choice loads without a click");
+  await context.close();
+}
+{
+  const { context, page, log } = await openPage({ width: 1024, height: 700 }, { storage: { "wd.realtime": "on" }, fx: "hang" });
+  await page.waitForTimeout(6000);
+  const whens = await page.locator(".tile__when").allInnerTexts();
+  check(log.fx === 1 && !whens.some((w) => /Real-time/.test(w)) && log.pageErrors.length === 0,
+    "real-time: timeout keeps stored values silently");
+  await context.close();
+}
+
+// ---------- fetched data missing: mock fallback ----------
+{
+  const { context, page, log } = await openPage({ width: 1024, height: 700 }, { blockFetched: true });
+  const tiles = await page.locator(".tile").count();
+  const badges = await page.locator(".badge-mock").count();
+  check(tiles === EXPECTED_TILES && badges === EXPECTED_TILES && log.pageErrors.length === 0,
+    `no dashboard.json: renders all tiles from the mock file (${tiles} tiles, ${badges} MOCK)`);
   await context.close();
 }
 

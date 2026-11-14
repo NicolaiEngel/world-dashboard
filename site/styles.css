@@ -50,6 +50,20 @@ body {
 .site-header__main { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 16px; min-width: 0; }
 .site-title { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
 .site-header__icons { display: flex; gap: 10px; font-size: 18px; flex: none; }
+.site-header { flex-wrap: wrap; }
+.site-header__main { flex: 1 1 auto; }
+.realtime-toggle {
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+}
+.realtime-toggle[aria-pressed="true"] { background: var(--badge-bg); }
+.realtime-toggle:focus-visible { outline: 2px solid var(--color-link); outline-offset: 2px; }
 .icon { opacity: 0.55; cursor: default; user-select: none; }
 
 /* ---------- layout ---------- */
@@ -157,7 +171,9 @@ body {
 .tile__chart canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
 
 .tile__footer { font-size: 12px; color: var(--color-text-muted); }
-.tile__when, .tile__source { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile__when { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Source attribution stays fully visible: it may wrap to two lines rather than being cut. */
+.tile__source { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
 .tile__source-link { color: var(--color-link); text-decoration: none; }
 .tile__source-link:hover, .tile__source-link:focus-visible { text-decoration: underline; }
 

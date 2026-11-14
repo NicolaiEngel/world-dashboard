@@ -3,7 +3,8 @@
 (function () {
   "use strict";
 
-  const DATA_URL = "data/mock-data.json";
+  // Fetched data first (written at deploy); the committed mock file is the fallback.
+  const DATA_URLS = ["data/dashboard.json", "data/mock-data.json"];
   const DAILY_WINDOW_DAYS = 365;
   const CADENCE_LABEL = { daily: "Daily", monthly: "Monthly", annual: "Annual" };
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -185,12 +186,65 @@
     $dashboard.replaceChildren(p);
   }
 
-  fetch(DATA_URL, { cache: "no-cache" })
-    .then((res) => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
+  /* Small hooks for site/realtime.js, so this file stays indicator-agnostic. */
+  const stored = {}; // id -> {number, cadence, date, dateTime} as rendered from stored data
+  let loaded = null;
+  const listeners = [];
+
+  function tileParts(id) {
+    const tile = $dashboard.querySelector(`.tile[data-id="${CSS.escape(id)}"]`);
+    if (!tile) return null;
+    return { number: tile.querySelector(".tile__number"), cadence: tile.querySelector(".tile__cadence"),
+             date: tile.querySelector(".tile__date"), tile };
+  }
+
+  window.WD = {
+    indicator: (id) => (loaded ? (loaded.indicators || []).find((i) => i.id === id) : undefined),
+    formatNumber,
+    onLoaded(fn) { if (loaded) fn(loaded); else listeners.push(fn); },
+    /* Show a value fetched in the browser: "Real-time · HH:MM" replaces frequency and date. */
+    setRealtime(id, value, time) {
+      const ind = window.WD.indicator(id), t = tileParts(id);
+      if (!ind || !t) return;
+      if (!stored[id]) stored[id] = { number: t.number.textContent, cadence: t.cadence.textContent,
+                                      date: t.date.textContent, dateTime: t.date.dateTime };
+      t.number.textContent = formatNumber(value, ind.decimals);
+      const hh = String(time.getHours()).padStart(2, "0"), mm = String(time.getMinutes()).padStart(2, "0");
+      t.cadence.textContent = "Real-time";
+      t.date.textContent = `${hh}:${mm}`;
+      t.date.dateTime = time.toISOString();
+      t.tile.dataset.realtime = "true";
+    },
+    restoreStored(id) {
+      const t = tileParts(id), s = stored[id];
+      if (!t || !s) return;
+      t.number.textContent = s.number; t.cadence.textContent = s.cadence;
+      t.date.textContent = s.date; t.date.dateTime = s.dateTime;
+      delete t.tile.dataset.realtime;
+      delete stored[id];
+    },
+  };
+
+  async function loadFirst(urls) {
+    for (const url of urls) {
+      try {
+        const res = await fetch(url, { cache: "no-cache" });
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (data && Array.isArray(data.indicators)) return data;
+      } catch (e) {
+        /* try the next file */
+      }
+    }
+    throw new Error("no data file could be loaded");
+  }
+
+  loadFirst(DATA_URLS)
+    .then((data) => {
+      render(data);
+      loaded = data;
+      listeners.splice(0).forEach((fn) => fn(data));
     })
-    .then(render)
     .catch((err) => {
       console.warn("World Dashboard: data load failed:", err.message);
       showLoadError();

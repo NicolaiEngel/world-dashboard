@@ -1,0 +1,98 @@
+[
+ {
+  "date": "2026-11-04",
+  "base": "EUR",
+  "quote": "CNY",
+  "rate": 7.5177
+ },
+ {
+  "date": "2026-11-04",
+  "base": "EUR",
+  "quote": "USD",
+  "rate": 1.1267
+ },
+ {
+  "date": "2026-11-05",
+  "base": "EUR",
+  "quote": "CNY",
+  "rate": 7.4846
+ },
+ {
+  "date": "2026-11-05",
+  "base": "EUR",
+  "quote": "USD",
+  "rate": 1.1224
+ },
+ {
+  "date": "2026-11-06",
+  "base": "EUR",
+  "quote": "CNY",
+  "rate": 7.4485
+ },
+ {
+  "date": "2026-11-06",
+  "base": "EUR",
+  "quote": "USD",
+  "rate": 1.1165
+ },
+ {
+  "date": "2026-11-09",
+  "base": "EUR",
+  "quote": "CNY",
+  "rate": 7.4689
+ },
+ {
+  "date": "2026-11-09",
+  "base": "EUR",
+  "quote": "USD",
+  "rate": 1.1193
+ },
+ {
+  "date": "2026-11-10",
+  "base": "EUR",
+  "quote": "CNY",
+  "rate": 7.4801
+ },
+ {
+  "date": "2026-11-10",
+  "base": "EUR",
+  "quote": "USD",
+  "rate": 1.1214
+ },
+ {
+  "date": "2026-11-11",
+  "base": "EUR",
+  "quote": "CNY",
+  "rate": 7.4225
+ },
+ {
+  "date": "2026-11-11",
+  "base": "EUR",
+  "quote": "USD",
+  "rate": 1.1127
+ },
+ {
+  "date": "2026-11-12",
+  "base": "EUR",
+  "quote": "CNY",
+  "rate": 7.3891
+ },
+ {
+  "date": "2026-11-12",
+  "base": "EUR",
+  "quote": "USD",
+  "rate": 1.1081
+ },
+ {
+  "date": "2026-11-13",
+  "base": "EUR",
+  "quote": "CNY",
+  "rate": 7.3738
+ },
+ {
+  "date": "2026-11-13",
+  "base": "EUR",
+  "quote": "USD",
+  "rate": 1.1052
+ }
+]
