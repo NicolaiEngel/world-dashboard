@@ -46,11 +46,7 @@ Every value in a `mock: false` entry SHALL come from an automated fetch of the n
 - **THEN** the series is stored in billions, divided by 10⁹ exactly, with the indicator's decimals applied
 
 ### Requirement: Per-indicator fallback to mock
-If an indicator's fetch fails, times out, returns an empty series, or has a latest value outside that indicator's plausible range, the runner SHALL fall back in this order:
-1. that indicator's entry from the previously published data, if it has `mock: false` and passes the same range check;
-2. otherwise, its mock entry unchanged (`mock: true`).
-
-The runner SHALL log the reason and the fallback used, and SHALL continue with the other indicators. The runner SHALL exit successfully unless it can't write the output file.
+If an indicator's fetch fails, times out, returns an empty series, or has a latest value outside its plausible range, the runner SHALL use, in order: (1) that indicator's previously published entry, if it has `mock: false` and passes the same range check; (2) otherwise its unchanged mock entry (`mock: true`). It SHALL log the reason and fallback, continue with the other indicators, and exit successfully unless it can't write the output file.
 
 #### Scenario: Source down
 - **WHEN** the NOAA endpoint returns an error and no previously published real entry exists for `co2_ppm`
