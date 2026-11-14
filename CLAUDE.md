@@ -66,9 +66,9 @@ These give the page its daily pulse, the way an energy monitor feels "live". The
 |---|---|---|---|
 | 1 | **A sketch of the page** | done | Wireframe (FigJam, Implementation Steps page) plus the mock data file and its generator. Only check that both are in the repo. |
 | 2 | **"It looks like a dashboard"** | ~75 min | A static page in `site/` (`index.html` + JS + CSS, no build step, chart library vendored in `site/vendor/`) that reads `mock-data.json`. It renders the header, the category headings and the 13 identical tiles from the wireframe, each with its value, mini chart, frequency, date and source link, in light mode. Most of the layout and styling work happens here. **Also add the deploy workflow** (`.github/workflows/deploy.yml`): on every push to `main` it publishes `site/`, plus the data file, to GitHub Pages using the official Pages actions. Before merging, tell us the one setting to change (Settings → Pages → Source: "GitHub Actions"). **Milestone: first version online.** |
-| 3 | **"I can see the trend at a glance"** | ~30 min | The change line on every tile (plain grey; comparison rules under Site design) and the "x of 13 live" count in the header. (The MOCK badges were already added after step 2.) Compute the count from the data, don't hard-code it. **Milestone: the complete experience exists, all on mock numbers.** |
+| 3 | ~~"I can see the trend at a glance"~~ | dropped | **Dropped** (decision 14 Nov 2026): no change line on the tiles and no "x of 13 live" count. The MOCK badges were added after step 2. |
 | 4 | **"The numbers are real"** | ~2 h | Replace the mocks tile by tile, highest visibility first: **(a)** exchange rates, fetched **in real time in the browser behind the opt-in control** (see "Real-time data in the browser"), plus their stored daily series (Bitcoin stays mock: CoinGecko's storage and user-agreement terms aren't met yet); **(b)** the World Bank tiles (child mortality, life expectancy, drinking water, population, fertility), where one generic fetcher fills all five; **(c)** daily temperature (Copernicus Climate Pulse), daily CO₂ (NOAA GML) and conflict deaths (Our World in Data); **(d)** GDP growth for high-income and for low & middle-income economies (World Bank), replacing the MSCI tiles; the IMF WEO split is a later upgrade once the IMF permits automated downloads. The fetchers run in every deploy (and by hand with `python -m pipeline.run`) and write `data/dashboard.json`, which isn't committed; the page falls back to `data/mock-data.json`. **Time-box each tile to about 15 minutes.** A tile that still misbehaves keeps its mock data and MOCK badge, gets a note in `DECISIONS.md`, and you move on. |
-| 5 | **"Tell me more"** | ~45 min | Clicking a tile opens the long-run chart, a sentence on what the indicator means, and its caveats (e.g. the Paris temperature definition). |
+| 5 | **"Show me the chart bigger"** | ~30 min | **Reduced** (decision 14 Nov 2026): an expand button on each tile opens a larger view of that tile's chart: the full stored series, more axis labels, and date and value on hover or tap. No definitions, caveat pages or other new text. |
 | 6 | **"Here's the link"** | ~30 min | It's already online, so this step is a final check of the live page (phone and desktop, all tiles, the real-time values, the detail view), fixes for anything that looks off, and a demo run-through. |
 
 **Extras, only if time is left, in roughly this order:**
@@ -228,21 +228,16 @@ OWID chart API: add `.csv` or `.metadata.json` to a grapher URL, use `?v=1&csvTy
 
 The reference is the wireframe on the **Implementation Steps** page of the FigJam board "Wold Dashboard" (`https://www.figma.com/board/6RL68x1YCVLlatUUr3idBF/Wold-Dashboard`). If you have Figma access, check it there. Otherwise:
 
-- **Header:** "World Dashboard" and an "x of 13 live" count. No page-wide data date: every tile shows its own date. The 🌐 ✏️ 👤 icons on the right are placeholders and do nothing yet.
+- **Header:** "World Dashboard" and the opt-in real-time control. No page-wide data date: every tile shows its own date. The 🌐 ✏️ 👤 icons on the right are placeholders and do nothing yet.
 - **Category headings, in this order:** Economy; Climate (temperature, CO₂); Health; Living standards; Stability; Demography. No empty placeholder slot.
 
   Let the grid wrap naturally rather than shrinking the tiles: all tiles stay the same size.
-- **All tiles use one identical format:** the same size; the title with a MOCK badge while the data is mocked; a one-line definition; the big value; the change line; a mini chart; and a footer with update frequency, date and source link. Titles must fit: use short titles such as "Emerging & developing" and put the detail in the definition line.
-- **Change line:**
-  - FX and Bitcoin compare with the previous day with data;
-  - **temperature and CO₂ compare with the same day one year earlier**, because day-to-day changes in these are weather or seasonal noise;
-  - annual tiles compare with 10 years earlier;
-  - a real-time value compares with the last stored daily close.
-  Write the comparison into the change line, e.g. "+0.21 °C vs same day 2025".
-- **Neutral colours:** no good/bad colouring. The change line is plain grey and every mini chart is the same blue.
+- **All tiles use one identical format:** the same size; the title with a MOCK badge while the data is mocked; a one-line definition; the big value; a mini chart with an expand button; and a footer with update frequency, date and source link. Titles must fit: use short titles such as "Emerging & developing" and put the detail in the definition line.
+- **Change line:** dropped with step 3.
+- **Neutral colours:** no good/bad colouring. Every chart is the same blue.
 - **Mini charts** have labelled value and date axes (a few compact ticks each), no tooltips.
 - **Light mode only for the MVP.** Ignore the dark styling in the wireframe and the Design Vision Board. Dark mode is a later feature. Keep all colours in CSS variables from the start, so adding a dark theme later (and forks re-theming) only means adding a second set of variables. The page must work on a phone and be readable without hovering.
-- **Detail view (step 5):** clicking a tile opens the long-run chart, a sentence on what the indicator means, and its caveats.
+- **Expanded chart (step 5):** the expand button opens a larger view of the same chart, showing only content the tile already has (title, MOCK badge, unit, source link).
 - **Real-time tiles:** the footer shows "Real-time · HH:MM" and the date the value was fetched.
 - **Failures:** a tile whose real data fails keeps its mock value and MOCK badge. A failed real-time fetch falls back to the stored value without any error on screen. That keeps the demo honest and stops one failure from breaking the page.
 

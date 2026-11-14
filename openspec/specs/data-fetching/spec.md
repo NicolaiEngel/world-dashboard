@@ -46,15 +46,19 @@ Every value in a `mock: false` entry SHALL come from an automated fetch of the n
 - **THEN** the series is stored in billions, divided by 10⁹ exactly, with the indicator's decimals applied
 
 ### Requirement: Per-indicator fallback to mock
-If an indicator's fetch fails, times out, returns an empty series, or has a latest value outside that indicator's plausible range, the runner SHALL keep that indicator's mock entry unchanged (`mock: true`). It SHALL log the reason and continue with the other indicators. The runner SHALL exit successfully unless it can't write the output file.
+If an indicator's fetch fails, times out, returns an empty series, or has a latest value outside its plausible range, the runner SHALL use, in order: (1) that indicator's previously published entry, if it has `mock: false` and passes the same range check; (2) otherwise its unchanged mock entry (`mock: true`). It SHALL log the reason and fallback, continue with the other indicators, and exit successfully unless it can't write the output file.
 
 #### Scenario: Source down
-- **WHEN** the NOAA endpoint returns an error
+- **WHEN** the NOAA endpoint returns an error and no previously published real entry exists for `co2_ppm`
 - **THEN** `co2_ppm` keeps its mock entry with `mock: true`, the log names the indicator and the error, and all other indicators are processed
+
+#### Scenario: Source down after earlier success
+- **WHEN** the NOAA endpoint returns an error and yesterday's published `co2_ppm` was real
+- **THEN** `co2_ppm` keeps yesterday's real entry unchanged (same series and `as_of`, `mock: false`)
 
 #### Scenario: Implausible value
 - **WHEN** a fetched latest value lies outside the indicator's configured min–max range
-- **THEN** the indicator keeps its mock entry, and the log reports a range-check failure
+- **THEN** the indicator uses the last-good or mock fallback, and the log reports a range-check failure
 
 ### Requirement: Series windows and dates
 Daily indicators SHALL store about the last 2 years of daily points with `YYYY-MM-DD` dates. Annual indicators SHALL store their full available history with `YYYY` dates. Series SHALL be sorted oldest first, with no null values.
@@ -64,11 +68,11 @@ Daily indicators SHALL store about the last 2 years of daily points with `YYYY-M
 - **THEN** that day is omitted from the series, not filled in
 
 ### Requirement: Run summary
-The runner SHALL print a summary: one line per indicator saying whether it was fetched or fell back to mock, with the reason for any fallback.
+The runner SHALL print a summary: one line per indicator saying whether it was fetched, kept last-good data (with that data's `as_of`), or fell back to mock, with the reason for any fallback.
 
 #### Scenario: Summary output
 - **WHEN** the runner finishes
-- **THEN** its output lists all 13 indicators, each as "real" or "mock (<reason>)"
+- **THEN** its output lists all 13 indicators, each as "real", "last-good (<as_of>, <reason>)" or "mock (<reason>)"
 
 ### Requirement: Tested against recorded responses
 Each source module SHALL have tests that parse small fixture files recorded from real responses of that source. The tests SHALL cover a successful parse, a malformed or empty response, and range-check failure. Fixtures SHALL NOT be invented.
@@ -76,3 +80,10 @@ Each source module SHALL have tests that parse small fixture files recorded from
 #### Scenario: Offline test run
 - **WHEN** `pytest` runs without network access
 - **THEN** all fetcher and runner tests pass using the recorded fixtures
+
+### Requirement: Previously published data is the last-good source
+When given the URL of the published site, the runner SHALL download the published `data/dashboard.json` before fetching. If that download fails, the runner SHALL continue without last-good data.
+
+#### Scenario: First deploy ever
+- **WHEN** there is no published `data/dashboard.json` yet (404)
+- **THEN** the runner continues, and failed indicators fall back to mock

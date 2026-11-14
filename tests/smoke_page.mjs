@@ -239,11 +239,89 @@ async function openPage(viewport, { blockData = false, blockFetched = false, fx 
   await context.close();
 }
 
+// ---------- enlarged chart view ----------
+{
+  const { context, page, log } = await openPage({ width: 1440, height: 1000 });
+  const btns = await page.locator(".tile__expand").evaluateAll((els) => els.map((b) => b.getAttribute("aria-label")));
+  const titles = await page.locator(".tile__title").allInnerTexts();
+  check(btns.length === EXPECTED_TILES && btns.every((b, i) => b === `Enlarge chart: ${titles[i]}`),
+    `expand: ${btns.length} buttons named "Enlarge chart: <title>"`);
+
+  // keyboard open + Esc close, focus returns
+  const co2Btn = page.locator('.tile[data-id="co2_ppm"] .tile__expand');
+  await co2Btn.focus();
+  await page.keyboard.press("Enter");
+  const openTitle = await page.locator("#expand[open] .expand__title").innerText().catch(() => "");
+  await page.keyboard.press("Escape");
+  const closed = !(await page.locator("#expand").evaluate((d) => d.open));
+  const focusBack = await page.evaluate(() => document.activeElement?.closest(".tile")?.dataset.id);
+  check(openTitle === "CO₂ concentration" && closed && focusBack === "co2_ppm",
+    `expand: Enter opens "${openTitle}", Esc closes, focus returns (${focusBack})`);
+
+  // full stored series: temperature spans its whole series, the tile only ~1 year
+  await page.locator('.tile[data-id="temp_anomaly"] .tile__expand').click();
+  const span = await page.evaluate(() => {
+    const c = Chart.getChart(document.querySelector("#expand canvas"));
+    const t = Chart.getChart(document.querySelector('.tile[data-id="temp_anomaly"] canvas'));
+    const ind = window.WD.indicator("temp_anomaly");
+    return { big: c.data.labels.length, tile: t.data.labels.length, series: ind.series.length,
+             first: c.data.labels[0] === ind.series[0].date, ticks: c.scales.x.ticks.length };
+  });
+  check(span.big === span.series && span.first && span.tile < span.big && span.ticks >= 5,
+    `expand: full series (${span.big} points vs ${span.tile} on the tile, ${span.ticks} date labels)`);
+  // backdrop click closes
+  await page.mouse.click(8, 8);
+  check(!(await page.locator("#expand").evaluate((d) => d.open)), "expand: backdrop click closes");
+
+  // value on hover: last point of population
+  await page.locator('.tile[data-id="population"] .tile__expand').click();
+  const pt = await page.evaluate(() => {
+    const c = Chart.getChart(document.querySelector("#expand canvas"));
+    const el = c.getDatasetMeta(0).data.at(-1); const r = c.canvas.getBoundingClientRect();
+    return { x: r.left + el.x, y: r.top + el.y };
+  });
+  await page.mouse.move(pt.x - 1, pt.y);
+  await page.waitForTimeout(150);
+  const tip = await page.evaluate(() => {
+    const c = Chart.getChart(document.querySelector("#expand canvas"));
+    const ind = window.WD.indicator("population"); const last = ind.series.at(-1);
+    return { title: c.tooltip.title?.join(" "), body: c.tooltip.body?.map((b) => b.lines.join(" ")).join(" "),
+             want: `${window.WD.formatNumber(last.value, ind.decimals)} ${ind.unit}`, year: last.date };
+  });
+  check(tip.title === tip.year && tip.body === tip.want, `expand: hover shows "${tip.title} · ${tip.body}"`);
+  await page.keyboard.press("Escape");
+
+  // mock badge only where mocked
+  await page.locator('.tile[data-id="btc_usd"] .tile__expand').click();
+  const btcBadge = await page.locator("#expand .badge-mock").isVisible();
+  await page.keyboard.press("Escape");
+  await page.locator('.tile[data-id="eur_usd"] .tile__expand').click();
+  const eurBadge = await page.locator("#expand .badge-mock").isVisible();
+  const eurMock = await page.evaluate(() => window.WD.indicator("eur_usd").mock);
+  await page.keyboard.press("Escape");
+  check(btcBadge && eurBadge === eurMock, "expand: MOCK badge shown only for mocked indicators");
+  check(log.foreign.length === 0 && log.pageErrors.length === 0, "expand: no outside requests, no errors");
+  await context.close();
+}
+{
+  const { context, page, log } = await openPage({ width: 360, height: 780 });
+  await page.locator('.tile[data-id="life_expectancy"] .tile__expand').click();
+  const m = await page.evaluate(() => {
+    const d = document.getElementById("expand").getBoundingClientRect();
+    const b = document.querySelector(".expand__close").getBoundingClientRect();
+    return { w: Math.round(d.width), sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth,
+             closeIn: b.right <= innerWidth && b.top >= 0 && b.bottom <= innerHeight };
+  });
+  await page.screenshot({ path: `${outDir}/phone-expand.png` });
+  check(m.w === 360 && m.sw <= m.cw && m.closeIn, `expand (phone): full width (${m.w}px), no horizontal scroll, close reachable`);
+  await context.close();
+}
+
 // ---------- fetched data missing: mock fallback ----------
 {
   const { context, page, log } = await openPage({ width: 1024, height: 700 }, { blockFetched: true });
   const tiles = await page.locator(".tile").count();
-  const badges = await page.locator(".badge-mock").count();
+  const badges = await page.locator(".tile .badge-mock").count();
   check(tiles === EXPECTED_TILES && badges === EXPECTED_TILES && log.pageErrors.length === 0,
     `no dashboard.json: renders all tiles from the mock file (${tiles} tiles, ${badges} MOCK)`);
   await context.close();

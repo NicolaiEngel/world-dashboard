@@ -4,6 +4,12 @@ Source choices, fallbacks in use, and open questions. Newest entries go at the t
 
 ## Decisions
 
+### Step 3 dropped, step 5 reduced to an expanded chart (2026-11-14)
+
+- **Step 3 is dropped:** no change line and no "x of 13 live" count.
+- **Step 5 is only an expanded chart view, with no generated text:** no definitions or explanatory sentences. The large view shows the tile's full stored series (daily tiles: about 2 years; annual tiles: full history) in a native `<dialog>`, with up to 6 axis labels per axis and the nearest point's date and value on hover or tap. It reuses the tile's chart configuration from `app.js` (`WD.chartConfig`). One chart instance is created per opening and destroyed on close.
+- The expand button (⤢) sits in the chart's top-right corner. Clicking anywhere on a mini chart also opens the view.
+
 ### Daily refresh (2026-11-14)
 
 - **Schedule:** `deploy.yml` also runs daily at 05:17 UTC, an off-peak minute. Each run tests, fetches and publishes, exactly like a push. The concurrency group `pages` keeps a scheduled run and a push run from publishing out of order.
