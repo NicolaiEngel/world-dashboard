@@ -7,15 +7,18 @@
   --color-text: #1b1f24;
   --color-text-muted: #5c6470;
   --color-border: #dfe3e8;
-  --color-slot-border: #c4cad3;
   --color-link: #1f5fbf;
   --chart-line: #2f6fdb;          /* the one chart colour for every tile */
+  --axis-text: #6b7380;
+  --axis-grid: #eceff3;
+  --badge-bg: #eceef1;            /* neutral: marks data status, not good/bad */
+  --badge-text: #4a525e;
   --color-error-bg: #fff4e5;
 
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   --tile-w: 212px;
-  --tile-h: 236px;
+  --tile-h: 272px;
   --gap: 12px;
   --gutter: 24px;
   --radius: 10px;
@@ -80,21 +83,38 @@ body {
 .category__tiles { display: flex; flex-wrap: wrap; gap: var(--gap); }
 
 /* ---------- tile ---------- */
-.tile, .tile-slot {
+.tile {
+  display: flex;
+  flex-direction: column;
   width: var(--tile-w);
   height: var(--tile-h);
   flex: none;
   border-radius: var(--radius);
-}
-.tile {
-  display: flex;
-  flex-direction: column;
   padding: 12px 14px 10px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   overflow: hidden;
 }
-.tile-slot { border: 1.5px dashed var(--color-slot-border); }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.tile__head { display: flex; align-items: flex-start; gap: 6px; }
+.tile__head .tile__title { flex: 1 1 auto; min-width: 0; }
+.badge-mock {
+  flex: none;
+  margin-top: 1px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--badge-bg);
+  color: var(--badge-text);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.3;
+  cursor: help;
+}
 
 .tile p { margin: 0; }
 .tile__title {
@@ -107,7 +127,7 @@ body {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .tile__subtitle {
   font-size: 12.5px;
@@ -134,7 +154,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 .tile__unit { font-size: 14px; color: var(--color-text-muted); }
-.tile__chart { position: relative; flex: 1 1 auto; min-height: 0; margin: 6px 0; }
+.tile__chart { position: relative; flex: 1 1 auto; min-height: 0; margin: 4px -4px 6px -6px; }
 .tile__chart canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
 
 .tile__footer { font-size: 12px; color: var(--color-text-muted); }
@@ -149,12 +169,15 @@ body {
     --gap: 10px;
     /* two tiles per row: (viewport - gutters - gap) / 2 */
     --tile-w: calc((100vw - 2 * var(--gutter) - var(--gap)) / 2);
-    --tile-h: 214px;
+    --tile-h: 250px;
   }
   .dashboard { gap: 18px var(--gap); }
   .site-title { font-size: 19px; }
   .tile { padding: 10px 11px 8px; }
   .tile__number { font-size: 23px; }
+  /* narrow tiles: the badge sits on its own line above the title, so titles keep full width */
+  .tile__head { flex-direction: column; gap: 3px; }
+  .badge-mock { order: -1; margin-top: 0; padding: 1px 4px; font-size: 9.5px; }
   .tile__unit { font-size: 12.5px; }
 }
 @media (max-width: 340px) {

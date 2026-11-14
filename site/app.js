@@ -40,9 +40,30 @@
     return s.filter((p) => dayNumber(p.date) >= cutoff);
   }
 
+  const compact = new Intl.NumberFormat("en", { notation: "compact", maximumSignificantDigits: 3 });
+
+  /* Axis label for a point date: years as-is, days and months as "Nov 2026". */
+  function axisDate(iso) {
+    const [y, m] = String(iso).split("-");
+    return m ? `${MONTHS[Number(m) - 1]} ${y}` : y;
+  }
+
+  /* x ticks at the first point, the middle (if room) and the last point. */
+  function edgeTicks(n, count) {
+    if (n <= 1) return [0];
+    if (count <= 2 || n === 2) return [0, n - 1];
+    return [0, Math.round((n - 1) / 2), n - 1];
+  }
+
   function drawChart(canvas, points) {
     if (typeof Chart === "undefined") return;
-    const color = getComputedStyle(document.documentElement).getPropertyValue("--chart-line").trim();
+    const css = getComputedStyle(document.documentElement);
+    const color = css.getPropertyValue("--chart-line").trim();
+    const axisText = css.getPropertyValue("--axis-text").trim();
+    const axisGrid = css.getPropertyValue("--axis-grid").trim();
+    const narrow = canvas.parentElement.clientWidth < 200;
+    const xCount = narrow ? 2 : 3;
+    const font = { size: 10, family: css.getPropertyValue("--font-sans").trim() };
     new Chart(canvas, {
       type: "line",
       data: {
@@ -63,7 +84,36 @@
         events: [],
         layout: { padding: { top: 2, bottom: 2 } },
         plugins: { legend: { display: false }, tooltip: { enabled: false } },
-        scales: { x: { display: false }, y: { display: false } },
+        scales: {
+          x: {
+            type: "category",
+            grid: { display: false },
+            border: { display: false },
+            afterBuildTicks: (axis) => {
+              axis.ticks = edgeTicks(points.length, xCount).map((i) => ({ value: i }));
+            },
+            ticks: {
+              autoSkip: false,
+              maxRotation: 0,
+              color: axisText,
+              font,
+              padding: 2,
+              callback: (value) => axisDate(points[value] ? points[value].date : ""),
+            },
+          },
+          y: {
+            grace: "5%",
+            grid: { color: axisGrid, drawTicks: false },
+            border: { display: false },
+            ticks: {
+              maxTicksLimit: 3,
+              color: axisText,
+              font,
+              padding: 4,
+              callback: (value) => compact.format(value),
+            },
+          },
+        },
       },
     });
   }
@@ -74,6 +124,7 @@
     node.dataset.id = ind.id;
 
     node.querySelector(".tile__title").textContent = ind.title;
+    if (ind.mock !== true) node.querySelector(".badge-mock").remove();
     const sub = node.querySelector(".tile__subtitle");
     sub.textContent = ind.subtitle || "";
     sub.title = ind.subtitle || "";
@@ -109,7 +160,7 @@
       .map((name) => ({ name, items: indicators.filter((i) => i.category === name) }))
       .filter((g) => g.items.length > 0);
 
-    groups.forEach((group, gi) => {
+    groups.forEach((group) => {
       const section = document.createElement("section");
       section.className = "category";
       const h = document.createElement("h2");
@@ -123,13 +174,6 @@
         tiles.appendChild(tile);
         charts.push([tile.querySelector("canvas"), chartWindow(ind)]);
       });
-
-      if (gi === groups.length - 1) {
-        const slot = document.createElement("div");
-        slot.className = "tile-slot";
-        slot.setAttribute("aria-hidden", "true");
-        tiles.appendChild(slot);
-      }
 
       section.append(h, tiles);
       $dashboard.appendChild(section);

@@ -74,6 +74,20 @@ async function openPage(viewport, { blockData = false } = {}) {
         points: chart ? chart.data.labels.length : 0,
         color: chart ? chart.data.datasets[0].borderColor : null,
         titleFits: fits(".tile__title") && fits(".tile__subtitle"), valueFits: fits(".tile__value"),
+        badges: t.querySelectorAll(".badge-mock").length,
+        badgeText: (t.querySelector(".badge-mock") || {}).textContent || "",
+        badgeTitle: t.querySelector(".badge-mock")?.getAttribute("title") || "",
+        axes: chart ? (() => {
+          const x = chart.scales.x, y = chart.scales.y;
+          const vals = chart.data.datasets[0].data;
+          return {
+            xShown: x.options.display !== false, yShown: y.options.display !== false,
+            xLabels: x.ticks.map((tk) => x.getLabelForValue ? x.options.ticks.callback.call(x, tk.value) : String(tk.label)),
+            yTicks: y.ticks.map((tk) => tk.value),
+            yLabels: y.ticks.map((tk) => String(tk.label)),
+            dataMin: Math.min(...vals), dataMax: Math.max(...vals),
+          };
+        })() : null,
       };
     }));
   const sizes = new Set(info.map((t) => `${t.w}x${t.h}`));
@@ -92,12 +106,23 @@ async function openPage(viewport, { blockData = false } = {}) {
     if (!t.titleFits || !t.valueFits) problems.push("title/definition/value overflow");
     if (ind.cadence === "daily" && !(t.points > 200 && t.points <= 366)) problems.push(`daily chart has ${t.points} points`);
     if (ind.cadence !== "daily" && t.points !== ind.series.length) problems.push(`annual chart has ${t.points}/${ind.series.length} points`);
+    if (t.badges !== (ind.mock === true ? 1 : 0)) problems.push(`${t.badges} MOCK badge(s) for mock=${ind.mock}`);
+    if (t.badges && !(/^MOCK/.test(t.badgeText) && /mock data/i.test(t.badgeText) && /mock data/i.test(t.badgeTitle))) problems.push("badge lacks accessible description");
+    const a = t.axes;
+    if (!a || !a.xShown || !a.yShown) problems.push("axes hidden");
+    else {
+      if (a.xLabels.length < 2 || a.xLabels.some((l) => !l)) problems.push(`x labels ${JSON.stringify(a.xLabels)}`);
+      const re = ind.cadence === "daily" ? /^[A-Z][a-z]{2} \d{4}$/ : /^\d{4}$/;
+      if (!a.xLabels.every((l) => re.test(l))) problems.push(`x label format ${JSON.stringify(a.xLabels)}`);
+      if (ind.cadence !== "daily" && (a.xLabels[0] !== ind.series[0].date || a.xLabels.at(-1) !== ind.series.at(-1).date))
+        problems.push("annual x labels don't reach first/last year");
+      if (a.yTicks.length < 2 || a.yLabels.some((l) => !l)) problems.push(`y ticks ${JSON.stringify(a.yLabels)}`);
+      if (!(a.yTicks[0] <= a.dataMin && a.yTicks.at(-1) >= a.dataMax)) problems.push(`y ticks ${a.yTicks[0]}..${a.yTicks.at(-1)} don't span ${a.dataMin}..${a.dataMax}`);
+    }
     check(problems.length === 0, `${ind.id}: ${problems.length ? problems.join("; ") : "value, date, link, chart ok"}`);
   }
 
-  const lastGroup = page.locator(".category").last();
-  check((await lastGroup.locator(".tile-slot").count()) === 1 && (await page.locator(".tile-slot").count()) === 1,
-    "one empty slot, at the end of the last group");
+  check((await page.locator(".tile-slot").count()) === 0, "no empty placeholder slot");
 
   check(log.errors.length === 0 && log.pageErrors.length === 0,
     `no console errors${log.errors.length + log.pageErrors.length ? ": " + [...log.errors, ...log.pageErrors].join(" | ") : ""}`);
@@ -116,6 +141,27 @@ async function openPage(viewport, { blockData = false } = {}) {
     .filter((t) => [".tile__title", ".tile__subtitle", ".tile__value"].some((s) => { const e = t.querySelector(s); return e.scrollWidth > e.clientWidth || e.scrollHeight > e.clientHeight + 1; }))
     .map((t) => t.dataset.id));
   check(overflow.length === 0, `phone: titles, definitions and values fit${overflow.length ? " (overflow: " + overflow.join(", ") + ")" : ""}`);
+  const axisIssues = await page.evaluate(() => [...document.querySelectorAll(".tile")].flatMap((t) => {
+    const chart = Chart.getChart(t.querySelector("canvas"));
+    const x = chart.scales.x, ctx = chart.ctx;
+    const f = x.options.ticks.font;
+    ctx.save(); ctx.font = `${f.size}px ${f.family}`;
+    const items = x.ticks.map((tk, i) => {
+      const label = x.options.ticks.callback.call(x, tk.value);
+      const w = ctx.measureText(label).width, px = x.getPixelForTick(i);
+      // Chart.js aligns edge labels inward when they'd overflow; use the drawn label boxes
+      return { label, w, px };
+    });
+    ctx.restore();
+    const out = [];
+    const items2 = (x._labelItems || []).map((it, i) => ({ ...items[i], left: it.options.translation[0] - (it.options.textAlign === "left" ? 0 : it.options.textAlign === "right" ? items[i].w : items[i].w / 2) }));
+    for (let i = 0; i + 1 < items2.length; i++) {
+      if (items2[i].left + items2[i].w + 2 > items2[i + 1].left) out.push(`${t.dataset.id}: "${items2[i].label}" overlaps "${items2[i + 1].label}"`);
+    }
+    for (const it of items2) if (it.left < -1 || it.left + it.w > chart.width + 1) out.push(`${t.dataset.id}: "${it.label}" outside chart`);
+    return out;
+  }));
+  check(axisIssues.length === 0, `phone: axis labels don't overlap or spill${axisIssues.length ? " (" + axisIssues.join("; ") + ")" : ""}`);
   check(log.pageErrors.length === 0, "phone: no uncaught errors");
   await page.screenshot({ path: `${outDir}/phone.png`, fullPage: true });
   await context.close();
