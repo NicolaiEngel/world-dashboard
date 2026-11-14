@@ -13,6 +13,24 @@ A runner SHALL produce `data/dashboard.json` in the same format as `data/mock-da
 - **WHEN** the runner finishes, whatever the outcome of individual fetches
 - **THEN** `data/dashboard.json` exists, has the same indicator ids and order as the mock file, and every entry has the fields that the mock-data spec requires
 
+### Requirement: Only licence-cleared sources are fetched
+An indicator SHALL be fetched only from a source whose published terms were read and found to allow display on a public, non-commercial website. `DECISIONS.md` SHALL record, for each such source: the terms URL, the decisive quote, the licence, and the required attribution. An indicator whose source isn't cleared SHALL have no active fetcher and SHALL stay mock.
+
+#### Scenario: Source not cleared
+- **WHEN** a source's terms forbid redistribution or can't be confirmed (as for MSCI index levels without an MSCI licence)
+- **THEN** the runner doesn't contact that source, the tile stays `mock: true`, and the run summary says "mock (licence not cleared)"
+
+#### Scenario: Licence record exists
+- **WHEN** an indicator is marked as fetchable in the indicator table
+- **THEN** `DECISIONS.md` lists its source with the terms URL, the quote, the licence and the attribution
+
+### Requirement: Required attribution is visible on the tile
+For each fetched indicator, `source.name` SHALL contain the attribution its licence requires, for example "Copernicus Climate Change Service (C3S)", "ECB via Frankfurter" or "CoinGecko". `source.url` SHALL point to the source. The tile shows both through its existing source link.
+
+#### Scenario: Copernicus attribution
+- **WHEN** `temp_anomaly` is real
+- **THEN** its tile footer names the Copernicus Climate Change Service and links to the source
+
 ### Requirement: Wording comes from the mock entry
 For each fetched indicator, the runner SHALL keep `id`, `title`, `subtitle`, `category`, `cadence`, `unit`, `decimals` and `caveat` from the mock entry, unless the source requires a change that is recorded in `DECISIONS.md`. It SHALL replace `series`, `as_of`, `source` and `mock` with the fetched values.
 
@@ -39,7 +57,7 @@ If an indicator's fetch fails, times out, returns an empty series, or has a late
 - **THEN** the indicator keeps its mock entry, and the log reports a range-check failure
 
 ### Requirement: Series windows and dates
-Daily indicators SHALL store about the last 2 years of daily points with `YYYY-MM-DD` dates. Annual indicators SHALL store their full available history with `YYYY` dates. Series SHALL be sorted oldest first, with no null values.
+Daily indicators SHALL store about the last 2 years of daily points with `YYYY-MM-DD` dates, or the last year where the free source offers no more (CoinGecko keyless). Annual indicators SHALL store their full available history with `YYYY` dates. Series SHALL be sorted oldest first, with no null values.
 
 #### Scenario: Gaps are skipped
 - **WHEN** a source reports a missing or flagged daily value (for example a NOAA `-999.99`)
