@@ -109,3 +109,75 @@ def test_summary_lists_every_indicator(tmp_path, monkeypatch):
     p = tmp_path / "out.json"
     runner.write_atomic(str(p), out)
     assert json.loads(p.read_text())["indicators"][0]["id"] == out["indicators"][0]["id"]
+
+
+# ---------- last-good fallback (add-daily-refresh) ----------
+import copy as _copy
+
+
+class FakeResp:
+    def __init__(self, status, payload=None, bad_json=False):
+        self.status_code, self._payload, self._bad = status, payload, bad_json
+
+    def json(self):
+        if self._bad:
+            raise ValueError("not json")
+        return self._payload
+
+
+class FakeSession:
+    def __init__(self, resp):
+        self.resp = resp
+
+    def get(self, url, timeout=None):
+        if isinstance(self.resp, Exception):
+            raise self.resp
+        return self.resp
+
+
+def published():
+    """A previously published file: the runner's own successful output."""
+    out, _ = runner.run(mock_data(), session=object(), sources=ok_sources(), now=NOW)
+    return out
+
+
+def test_load_last_good_ignores_404_bad_json_and_errors():
+    assert runner.load_last_good(FakeSession(FakeResp(404)), "https://x/data/dashboard.json") == {}
+    assert runner.load_last_good(FakeSession(FakeResp(200, bad_json=True)), "https://x/d.json") == {}
+    assert runner.load_last_good(FakeSession(TimeoutError("slow")), "https://x/d.json") == {}
+    assert runner.load_last_good(FakeSession(FakeResp(200, {})), None) == {}
+    lg = runner.load_last_good(FakeSession(FakeResp(200, published())), "https://x/d.json")
+    assert set(lg) == {i["id"] for i in mock_data()["indicators"]}
+
+
+def test_valid_last_good_reused_after_source_error():
+    prev = {i["id"]: i for i in published()["indicators"]}
+    out, summary = runner.run(mock_data(), session=object(), sources=ok_sources(noaa_gml=boom), now=NOW, last_good=prev)
+    co2 = next(i for i in out["indicators"] if i["id"] == "co2_ppm")
+    assert co2 == prev["co2_ppm"] and co2["mock"] is False
+    state = dict((i, (s, d)) for i, s, d in summary)["co2_ppm"]
+    assert state == ("last-good", f"{prev['co2_ppm']['as_of']}, SourceError: HTTP 503 from example")
+
+
+def test_mock_last_good_not_reused():
+    prev = {i["id"]: i for i in published()["indicators"]}
+    prev["co2_ppm"] = _copy.deepcopy(next(i for i in mock_data()["indicators"] if i["id"] == "co2_ppm"))  # mock: true
+    out, summary = runner.run(mock_data(), session=object(), sources=ok_sources(noaa_gml=boom), now=NOW, last_good=prev)
+    assert dict((i, s) for i, s, _ in summary)["co2_ppm"] == "mock"
+
+
+def test_out_of_range_last_good_not_reused():
+    prev = {i["id"]: _copy.deepcopy(i) for i in published()["indicators"]}
+    prev["co2_ppm"]["series"][-1]["value"] = 999.0
+    out, summary = runner.run(mock_data(), session=object(), sources=ok_sources(noaa_gml=boom), now=NOW, last_good=prev)
+    assert dict((i, s) for i, s, _ in summary)["co2_ppm"] == "mock"
+
+
+def test_summary_shows_all_three_states():
+    prev = {i["id"]: i for i in published()["indicators"]}
+    _, summary = runner.run(mock_data(), session=object(), sources=ok_sources(noaa_gml=boom), now=NOW, last_good=prev)
+    text = runner.format_summary(summary, last_good_available=True)
+    assert "11 of 13 indicators real, 1 kept from the last good run" in text
+    assert "last-good data available" in text
+    assert "- co2_ppm: last-good (" in text and "- btc_usd: mock (licence not cleared)" in text
+    assert "- eur_usd: real, as of" in text

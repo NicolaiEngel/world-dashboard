@@ -58,6 +58,17 @@ It checks the tile count, category order, uniform tile size, values, that only t
 
 ## Deployment
 
-Every push to `main` runs the tests, fetches real data and publishes `site/` plus the data files to GitHub Pages through `.github/workflows/deploy.yml`. This needs one setting: Settings → Pages → Source: "GitHub Actions".
+`.github/workflows/deploy.yml` runs the tests, fetches real data and publishes `site/` plus the data files to GitHub Pages:
+
+- on every push to `main`;
+- daily at 05:17 UTC, so the daily tiles stay current;
+- by hand: Actions → "Deploy to GitHub Pages" → Run workflow.
+
+If a source fails, a tile keeps the last published real data; the run's summary says which tiles are real, kept from the last good run, or mock.
+
+Settings:
+
+- **Required:** Settings → Pages → Source: "GitHub Actions".
+- **Optional:** to stop GitHub from switching off the daily run after 60 days without commits, add the repository variable `KEEPALIVE` with value `true` (Settings → Secrets and variables → Actions → Variables).
 
 See `DECISIONS.md` for the design choices and open questions, and `CLAUDE.md` for the plan.

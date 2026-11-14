@@ -4,6 +4,18 @@ Source choices, fallbacks in use, and open questions. Newest entries go at the t
 
 ## Decisions
 
+### Daily refresh (2026-11-14)
+
+- **Schedule:** `deploy.yml` also runs daily at 05:17 UTC, an off-peak minute. Each run tests, fetches and publishes, exactly like a push. The concurrency group `pages` keeps a scheduled run and a push run from publishing out of order.
+- **Last-good fallback:**
+  - Before fetching, the runner downloads the currently published `data/dashboard.json`. The URL comes from `actions/configure-pages`, so forks use their own site automatically.
+  - If a source fails today, the indicator keeps yesterday's published entry unchanged, but only if it was real (`mock: false`) and its latest value still passes the range check. Otherwise it falls back to mock.
+  - The tile's date shows how old the data is. The job summary lists "last-good (<as_of>, <reason>)".
+- **Keepalive:**
+  - A separate job, which runs only on scheduled runs and only if the repository variable `KEEPALIVE` is `true`. Forks don't inherit it.
+  - It calls `PUT /repos/{owner}/{repo}/actions/workflows/deploy.yml/enable` with the built-in token (`actions: write` for that job only). No commits, no third-party action.
+  - **Caveat:** GitHub doesn't document that re-enabling resets the 60-day inactivity timer ([docs](https://docs.github.com/actions/managing-workflow-runs/disabling-and-enabling-a-workflow)). Users report it works ([discussion #184653](https://github.com/orgs/community/discussions/184653)). The popular `keepalive-workflow` action's API mode uses the same call, so switching to it would add third-party code without more certainty. If the schedule is disabled anyway, GitHub emails the owner; re-enable it in the Actions tab.
+
 ### Real data, MVP step 4 (2026-11-14)
 
 - **Pipeline:** `python -m pipeline.run` merges fetched data onto `data/mock-data.json` and writes `data/dashboard.json`, which isn't committed. The deploy workflow runs `pytest`, then the runner, then publishes. A source that fails, or whose value fails its range check, leaves that tile mocked; the job summary says why.
