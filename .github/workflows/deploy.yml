@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -45,7 +45,7 @@ jobs:
 
       - name: Configure Pages
         id: pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Fetch real data
         # Never fails the deploy for a source error: a failed indicator keeps the last
@@ -63,13 +63,13 @@ jobs:
           test -f _site/data/mock-data.json && test -f _site/data/dashboard.json && test ! -L _site/data
 
       - name: Upload site
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
       - name: Deploy
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   # Keeps the daily schedule from being disabled after 60 days without repository activity.
   # Opt-in per repository (Settings -> Secrets and variables -> Actions -> Variables:

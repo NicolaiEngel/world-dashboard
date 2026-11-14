@@ -4,6 +4,24 @@ Source choices, fallbacks in use, and open questions. Newest entries go at the t
 
 ## Decisions
 
+### Step 6: final check of the live page (2026-11-14)
+
+**Audit** of https://nicolaiengel.github.io/world-dashboard/:
+- **Widths tested:** 1440, 1280, 768 and 390 px.
+- **Accessibility:** axe-core 4.10.3 (WCAG 2 A/AA plus best practices), run in the browser with no outside calls: **no violations**.
+- **Requests on load:** own origin only: `index.html`, `styles.css`, `app.js`, `realtime.js`, `expand.js`, `vendor/chart.umd.min.js`, `data/dashboard.json`.
+- **Size and speed:** about 100 KB transferred (Chart.js 72 KB, data 20 KB); load about 1–1.5 s.
+- **Layout:** all 13 tiles identical in size at every width, no horizontal scroll.
+
+**Fixes:**
+
+| Finding | Fix |
+|---|---|
+| The expand button covered the newest points of rising charts | Moved into the tile's value row; the smoke check asserts it never intersects the plot area (1440 and 360 px) |
+| Phone header was about 130 px tall: the real-time label wrapped and the icons took a third row | At ≤ 520 px the icons share the title row and the label is "Real-time rates (Frankfurter)". The `aria-label` keeps the full text. The header is now 90 px at 360 px |
+| No favicon: a 404 request for `/favicon.ico` on every visit | Inline SVG favicon as a `data:` URI, so no request |
+| Deploy warned that Node.js 20 actions are deprecated | `setup-python@v7`, `configure-pages@v6`, `upload-pages-artifact@v5`, `deploy-pages@v5`. These versions were taken from several public upgrade PRs (not the actions' own release notes, which this environment can't read) and are confirmed by the deploy run after merge |
+
 ### Step 3 dropped, step 5 reduced to an expanded chart (2026-11-14)
 
 - **Step 3 is dropped:** no change line and no "x of 13 live" count.
