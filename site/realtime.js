@@ -10,6 +10,10 @@
   const TIMEOUT_MS = 5000;
   const LABEL_OFF = "Load real-time exchange rates (connects to Frankfurter)";
   const LABEL_ON = "Real-time exchange rates on · switch off";
+  // Narrow screens: shorter visible label, still naming the service; full text stays the accessible name.
+  const SHORT_OFF = "Real-time rates (Frankfurter)";
+  const SHORT_ON = "Real-time rates on · off";
+  const narrow = window.matchMedia ? window.matchMedia("(max-width: 520px)") : { matches: false };
 
   const $btn = document.getElementById("realtime-toggle");
   if (!$btn || !window.WD) return;
@@ -25,9 +29,12 @@
   let controller = null;
 
   function setButton() {
-    $btn.textContent = on ? LABEL_ON : LABEL_OFF;
+    const full = on ? LABEL_ON : LABEL_OFF;
+    $btn.textContent = narrow.matches ? (on ? SHORT_ON : SHORT_OFF) : full;
+    $btn.setAttribute("aria-label", full);
     $btn.setAttribute("aria-pressed", on ? "true" : "false");
   }
+  if (narrow.addEventListener) narrow.addEventListener("change", setButton);
 
   /* Only tiles whose stored data is real get real-time values. */
   function eligible() {

@@ -173,8 +173,10 @@ body {
 .tile__chart { cursor: zoom-in; }
 
 /* ---------- expand button (on the mini chart) ---------- */
+.tile__valuerow { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-top: 6px; }
+.tile__valuerow .tile__value { margin-top: 0 !important; min-width: 0; flex: 1 1 auto; }
 .tile__expand {
-  position: absolute; top: -2px; right: 0;
+  flex: none; margin-top: 4px;
   width: 24px; height: 24px; padding: 0;
   border: 1px solid var(--color-border); border-radius: 6px;
   background: var(--color-surface); color: var(--color-text-muted);
@@ -216,6 +218,11 @@ body {
 
 /* ---------- phone ---------- */
 @media (max-width: 520px) {
+  /* header: title + icons on row 1, real-time control on row 2 */
+  .site-header { gap: 8px 12px; padding-top: 12px; padding-bottom: 12px; }
+  .site-header__main { order: 1; }
+  .site-header__icons { order: 2; font-size: 16px; }
+  .realtime-toggle { order: 3; flex: 1 1 100%; white-space: nowrap; }
   :root {
     --gutter: 16px;
     --gap: 10px;

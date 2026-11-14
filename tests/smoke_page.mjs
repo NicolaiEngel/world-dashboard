@@ -39,8 +39,10 @@ async function openPage(viewport, { blockData = false, blockFetched = false, fx 
   const log = { errors: [], pageErrors: [], foreign: [] };
   page.on("console", (m) => m.type() === "error" && log.errors.push(m.text()));
   page.on("pageerror", (e) => log.pageErrors.push(e.message));
+  log.requests = [];
   page.on("request", (r) => {
     const u = r.url();
+    log.requests.push(u);
     if (!u.startsWith("data:") && new URL(u).origin !== origin) log.foreign.push(u);
   });
   if (storage) await context.addInitScript((kv) => { for (const [k, v] of Object.entries(kv)) localStorage.setItem(k, v); }, storage);
@@ -314,6 +316,37 @@ async function openPage(viewport, { blockData = false, blockFetched = false, fx 
   });
   await page.screenshot({ path: `${outDir}/phone-expand.png` });
   check(m.w === 360 && m.sw <= m.cw && m.closeIn, `expand (phone): full width (${m.w}px), no horizontal scroll, close reachable`);
+  await context.close();
+}
+
+// ---------- polish: button off the plot, compact phone header, inline favicon ----------
+for (const width of [1440, 360]) {
+  const { context, page, log } = await openPage({ width, height: 900 });
+  const overlaps = await page.evaluate(() => [...document.querySelectorAll(".tile")].filter((t) => {
+    const c = Chart.getChart(t.querySelector(".tile__chart canvas")); const a = c.chartArea;
+    const cr = c.canvas.getBoundingClientRect(), b = t.querySelector(".tile__expand").getBoundingClientRect();
+    const plot = { l: cr.left + a.left, r: cr.left + a.right, t: cr.top + a.top, b: cr.top + a.bottom };
+    return b.left < plot.r && b.right > plot.l && b.top < plot.b && b.bottom > plot.t;
+  }).map((t) => t.dataset.id));
+  check(overlaps.length === 0, `${width}px: expand buttons don't cover the plot${overlaps.length ? " (" + overlaps.join(", ") + ")" : ""}`);
+  if (width === 360) {
+    const h = await page.evaluate(() => {
+      const hd = document.querySelector(".site-header"), btn = document.getElementById("realtime-toggle");
+      const icons = document.querySelector(".site-header__icons").getBoundingClientRect();
+      const title = document.querySelector(".site-title").getBoundingClientRect();
+      const lh = parseFloat(getComputedStyle(btn).lineHeight) || 18;
+      return { height: Math.round(hd.getBoundingClientRect().height), label: btn.innerText, aria: btn.getAttribute("aria-label"),
+               oneLine: btn.getBoundingClientRect().height < 2 * lh + 12, iconsOnTitleRow: Math.abs(icons.top - title.top) < 16 };
+    });
+    check(h.height <= 100 && h.oneLine && h.iconsOnTitleRow,
+      `360px: header ${h.height}px, real-time control on one line, icons on the title row`);
+    check(/Frankfurter/.test(h.label) && h.aria === "Load real-time exchange rates (connects to Frankfurter)",
+      `360px: short label "${h.label}" names Frankfurter; accessible name is the full label`);
+  } else {
+    const fav = await page.evaluate(() => document.querySelector('link[rel~="icon"]')?.getAttribute("href") || "");
+    const favReq = log.requests.filter((u) => /favicon|\.ico($|\?)/.test(u));
+    check(fav.startsWith("data:image/svg+xml") && favReq.length === 0, "inline favicon, no favicon request");
+  }
   await context.close();
 }
 

@@ -48,9 +48,9 @@
   // A click on the backdrop lands on the <dialog> element itself, not on its panel.
   $dialog.addEventListener("click", (e) => { if (e.target === $dialog) close(); });
 
-  // Expand button, or a click anywhere on a tile's mini chart.
+  // Expand button (in the value row), or a click anywhere on a tile's mini chart.
   $dashboard.addEventListener("click", (e) => {
-    const area = e.target.closest(".tile__chart");
+    const area = e.target.closest(".tile__expand, .tile__chart");
     if (!area) return;
     const tile = area.closest(".tile");
     if (!tile) return;
