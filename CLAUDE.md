@@ -81,6 +81,8 @@ These give the page its daily pulse, the way an energy monitor feels "live". The
 
 ## After the MVP
 
+Open tasks collected after the MVP are in `BACKLOG.md`. Pick them up one OpenSpec change at a time.
+
 1. **Automation:** move to the config-driven pipeline and the single build-and-deploy workflow described under Architecture, with the last-good fallback and keepalive. That workflow replaces the MVP's `deploy.yml`.
 2. **All indicators:** add the parked indicators a few at a time, each with tests.
 3. **Ready to publish:** work through "Before going public", then the README with the "Make your own" guide, SPEC.md, CONTRIBUTING.md, LICENSE, and a final pass on `DECISIONS.md`.
@@ -294,6 +296,7 @@ tests/                    # tests and recorded fixtures
 docs/SPEC.md
 .github/workflows/build-and-deploy.yml
 DECISIONS.md              # source choices, fallbacks used, open questions
+BACKLOG.md                # open tasks for future development
 README.md  CONTRIBUTING.md  LICENSE
 ```
 

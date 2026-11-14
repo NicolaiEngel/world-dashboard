@@ -71,4 +71,4 @@ Settings:
 - **Required:** Settings → Pages → Source: "GitHub Actions".
 - **Optional:** to stop GitHub from switching off the daily run after 60 days without commits, add the repository variable `KEEPALIVE` with value `true` (Settings → Secrets and variables → Actions → Variables).
 
-See `DECISIONS.md` for the design choices and open questions, and `CLAUDE.md` for the plan.
+See `DECISIONS.md` for the design choices and open questions, `BACKLOG.md` for open tasks, and `CLAUDE.md` for the plan.
