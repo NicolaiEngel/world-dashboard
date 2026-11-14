@@ -14,11 +14,15 @@ Provides the clearly labelled mock dataset that the dashboard renders until real
 - **THEN** the resulting `data/mock-data.json` is identical to the committed file
 
 ### Requirement: Mock data covers the 13 MVP indicators
-The mock data SHALL contain exactly these indicators: `temp_anomaly`, `co2_ppm`, `child_mortality`, `life_expectancy`, `drinking_water`, `conflict_deaths`, `msci_world`, `msci_em`, `eur_usd`, `usd_cny`, `btc_usd`, `population` and `fertility`. Every indicator SHALL have `mock: true`.
+The mock data SHALL contain exactly these indicators: `temp_anomaly`, `co2_ppm`, `child_mortality`, `life_expectancy`, `drinking_water`, `conflict_deaths`, `gdp_growth_advanced`, `gdp_growth_developing`, `eur_usd`, `usd_cny`, `btc_usd`, `population` and `fertility`. Every indicator SHALL have `mock: true`.
 
 #### Scenario: Indicator count
 - **WHEN** the data file is loaded
 - **THEN** it lists 13 indicators, each with `mock` set to `true`
+
+#### Scenario: MSCI replaced by GDP growth
+- **WHEN** the Economy indicators are listed
+- **THEN** they are `gdp_growth_advanced`, `gdp_growth_developing`, `eur_usd`, `usd_cny` and `btc_usd`. The two GDP entries are annual, with unit "%", and neither `msci_world` nor `msci_em` exists
 
 ### Requirement: Each indicator has the agreed fields
 Each indicator SHALL have `id`, `title`, `subtitle`, `category`, `cadence` (`daily` or `annual`), `unit`, `decimals`, `source` (with `name` and `url`), `as_of`, `mock`, an optional `caveat`, and `series`. The `series` field is a list of `{date, value}` pairs, oldest first. `as_of` SHALL equal the date of the last series point. Every `category` SHALL appear in the top-level `categories` list. The top-level fields stay as they are.
