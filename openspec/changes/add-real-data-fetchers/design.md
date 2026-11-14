@@ -65,7 +65,7 @@ tests/
   | World Bank | To confirm per indicator. The site terms defer to the Data Catalog's dataset licence (WDI is listed as CC BY 4.0) |
   | Copernicus Climate Pulse | To confirm. The CDS licence list includes CC BY 4.0, but the Climate Pulse page is a script-rendered app; the licence and attribution come from its data page or CSV header |
   | NOAA GML | To confirm from the CSV header's data-use statement |
-  | IMF World Economic Outlook | To confirm on the IMF's copyright and usage page (`www.imf.org`, host still to be allowed) |
+  | IMF World Economic Outlook | ✓ with attribution, read via search excerpts because `www.imf.org` returns 403 to automated reads, so you should confirm the page once in a browser. [Copyright and Usage](https://www.imf.org/en/about/copyright-and-terms): statistical data may be "downloaded, copied, adapted, published, and distributed", crediting "Source: International Monetary Fund, <database name>". Altered data must be flagged; commercial reuse needs permission (copyright@imf.org). Caveats: "bulk downloads by automated means" need permission, and the DataMapper API returned 403 to an honestly identified request from this container (14 Nov 2026) |
   | MSCI index levels | ✗ "Reproduction, redistribution or any other form of copying or transmission of the Data without MSCI's prior written consent is strictly prohibited." The MSCI Index API is a licensed product. Tiles replaced by IMF GDP growth |
   | Coinbase | ✗ not confirmed: the terms page returns 403 to automated reads, and older terms restricted display to third parties. Not used |
 
@@ -100,7 +100,8 @@ tests/
   - Keep years ≤ the current year and drop nulls.
   - The WEO edition (for example "October 2026") is read from the API's metadata if it's there. Otherwise it's derived from the publication schedule and stated as such in `DECISIONS.md`.
   - Caveat: "<year> is an IMF estimate (WEO <edition>)."
-  - Source "IMF World Economic Outlook", linked to the DataMapper indicator page.
+  - Source "International Monetary Fund, World Economic Outlook database" (the IMF's required attribution form), linked to the DataMapper indicator page. The caveat notes that the data is rounded and cut at the current year (the "altered data" condition).
+  - **Access:** one small request per deploy. If the GitHub runner is also refused (403), the tiles switch to the World Bank fallback below. No bot-protection workarounds.
   - Range check −15…+20 %.
   - **Mock data:** the generator replaces the two MSCI entries with plausible annual series from 1980 to 2026 (advanced about 1–3 %, developing about 3–6 %, with a 2009 and 2020 dip), using the existing shared random stream rules. The other series stay byte-identical: the old MSCI draws keep running, just unused, the same trick as for the annual temperature.
   - **Rejected:** World Bank income groups (no current-year estimate) and CPB industrial production (licence unclear). Both are recorded in `DECISIONS.md` as alternatives.
@@ -140,7 +141,7 @@ tests/
 - [The Copernicus baseline offset is mis-cited] → Cite the C3S page and value in `DECISIONS.md`, and state it in the caveat. If unsure, keep the tile mocked.
 - [The container can't reach the sources] → Ask to allow the hosts listed in the proposal. If it's still blocked, verify via `workflow_dispatch` and record fixtures from the runner's output artifact.
 - [Real-time contacts third parties, under GDPR, from Germany] → Opt-in only, with the services named on the control. The privacy statement comes in the "before going public" step.
-- [IMF terms turn out restrictive] → The GDP tiles stay mock, and the fallback is World Bank GDP growth by income group (`NY.GDP.MKTP.KD.ZG`, `HIC` / `LMY`, CC BY 4.0) through the existing World Bank fetcher.
+- [IMF blocks automated access from GitHub runners too, or you prefer to avoid the automated-download clause] → Switch to World Bank GDP growth by income group (`NY.GDP.MKTP.KD.ZG`, `HIC` / `LMY`, CC BY 4.0) through the existing World Bank fetcher; tile wording becomes "High income" / "Low & middle income". Optionally ask copyright@imf.org once.
 - [CLAUDE.md still lists the MSCI tiles] → Recorded in `DECISIONS.md`; you may want to update CLAUDE.md's indicator list.
 - [CoinGecko terms change or rate-limit the keyless pool] → One call per run; on a 429 or error the tile falls back like any other source.
 
