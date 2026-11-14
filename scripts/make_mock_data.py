@@ -55,6 +55,8 @@ def set_points(series, overrides):
 
 
 # ---------- annual ("slow") layer ----------
+# Annual temperature: no longer published (temp_anomaly is daily now), but kept so the
+# shared random stream, and therefore every series below, stays byte-identical.
 temp = set_points(
     annual(range(1950, 2026),
            lambda y: 0.30 if y < 1975 else 0.30 + 0.02 * (y - 1975),
@@ -98,6 +100,46 @@ eur_usd = random_walk(days, 1.10, 1.16, 0.004, 4)
 usd_cny = random_walk(days, 7.25, 7.12, 0.002, 4)
 btc_usd = random_walk(days, 92_000, 98_000, 0.025, 0)
 
+# ---------- daily climate layer ----------
+# Own RNG so these series don't shift the shared random stream above.
+crng = random.Random(2026)
+
+
+def calendar_days(end, n_days=730):
+    return [end - timedelta(days=n_days - 1 - k) for k in range(n_days)]
+
+
+def daily_temp(end):
+    """Daily global air-temperature anomaly vs 1850-1900, ~2 days behind."""
+    out, noise = [], 0.0
+    for d in calendar_days(end):
+        noise = 0.85 * noise + crng.gauss(0, 0.05)        # weather persistence
+        doy = d.timetuple().tm_yday
+        seasonal = 0.06 * math.cos(2 * math.pi * (doy - 15) / 365.25)
+        trend = 1.42 + 0.02 * (d - end).days / 365.25
+        out.append({"date": d.isoformat(), "value": round(trend + seasonal + noise, 2)})
+    return out
+
+
+def daily_co2(end):
+    """Daily Mauna Loa CO2: trend + seasonal cycle (peak ~May), with a few gaps."""
+    out = []
+    for d in calendar_days(end):
+        if crng.random() < 0.03:                          # instrument / weather gaps
+            continue
+        doy = d.timetuple().tm_yday
+        trend = 427.6 + 2.5 * (d - end).days / 365.25
+        seasonal = 3.5 * math.cos(2 * math.pi * (doy - 135) / 365.25)
+        out.append({"date": d.isoformat(), "value": round(trend + seasonal + crng.gauss(0, 0.4), 2)})
+    if out[-1]["date"] != end.isoformat():                # latest day always present
+        out.append({"date": end.isoformat(), "value": round(427.6 + 3.5 * math.cos(
+            2 * math.pi * (end.timetuple().tm_yday - 135) / 365.25), 2)})
+    return out
+
+
+temp_daily = daily_temp(TODAY - timedelta(days=2))
+co2 = daily_co2(TODAY - timedelta(days=1))
+
 
 def ind(id_, title, subtitle, category, cadence, unit, decimals, source, series, caveat=None):
     """One tile. All tiles share this shape; the UI renders them identically."""
@@ -124,9 +166,12 @@ FRANKFURTER = {"name": "ECB via Frankfurter", "url": "https://www.frankfurter.ap
 
 # Order = display order on the page
 indicators = [
-    ind("temp_anomaly", "Temperature anomaly", "°C above 1850–1900 average", "Climate", "annual", "°C", 2,
-        OWID("https://ourworldindata.org/climate-change"), temp,
-        "Single-year value. The Paris goal refers to long-term (~20-year) average warming."),
+    ind("temp_anomaly", "Temperature anomaly", "°C above 1850–1900 average", "Climate", "daily", "°C", 2,
+        {"name": "Copernicus Climate Pulse (C3S)", "url": "https://pulse.climate.copernicus.eu/"}, temp_daily,
+        "Single-day value. The Paris goal refers to long-term (~20-year) average warming."),
+    ind("co2_ppm", "CO₂ concentration", "Atmospheric CO₂ at Mauna Loa, ppm", "Climate", "daily", "ppm", 2,
+        {"name": "NOAA GML (Mauna Loa)", "url": "https://gml.noaa.gov/ccgg/trends/"}, co2,
+        "Daily values have gaps; strong seasonal cycle, so compare with the same day a year earlier."),
     ind("child_mortality", "Child mortality", "Deaths under 5 per 1,000 live births", "Health", "annual",
         "per 1,000", 1, WB("SH.DYN.MORT"), child_mort),
     ind("life_expectancy", "Life expectancy", "Years at birth", "Health", "annual", "years", 1,
