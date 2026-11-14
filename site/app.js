@@ -48,23 +48,23 @@
     return m ? `${MONTHS[Number(m) - 1]} ${y}` : y;
   }
 
-  /* x ticks at the first point, the middle (if room) and the last point. */
+  /* x ticks evenly spaced from the first to the last point (count >= 2). */
   function edgeTicks(n, count) {
     if (n <= 1) return [0];
-    if (count <= 2 || n === 2) return [0, n - 1];
-    return [0, Math.round((n - 1) / 2), n - 1];
+    const k = Math.max(2, Math.min(count, n));
+    return Array.from({ length: k }, (_, i) => Math.round((i * (n - 1)) / (k - 1)));
   }
 
-  function drawChart(canvas, points) {
-    if (typeof Chart === "undefined") return;
+  /* One chart config for the tiles and the enlarged view.
+     opts: { xCount, yTicks, fontSize, tooltip: {decimals, unit} | null } */
+  function chartConfig(points, opts) {
     const css = getComputedStyle(document.documentElement);
     const color = css.getPropertyValue("--chart-line").trim();
     const axisText = css.getPropertyValue("--axis-text").trim();
     const axisGrid = css.getPropertyValue("--axis-grid").trim();
-    const narrow = canvas.parentElement.clientWidth < 200;
-    const xCount = narrow ? 2 : 3;
-    const font = { size: 10, family: css.getPropertyValue("--font-sans").trim() };
-    new Chart(canvas, {
+    const font = { size: opts.fontSize || 10, family: css.getPropertyValue("--font-sans").trim() };
+    const tip = opts.tooltip;
+    return {
       type: "line",
       data: {
         labels: points.map((p) => p.date),
@@ -73,6 +73,8 @@
           borderColor: color,
           borderWidth: 1.6,
           pointRadius: 0,
+          pointHoverRadius: tip ? 4 : 0,
+          pointHitRadius: tip ? 6 : 0,
           tension: 0,
           fill: false,
         }],
@@ -81,16 +83,27 @@
         responsive: true,
         maintainAspectRatio: false,
         animation: false,
-        events: [],
+        events: tip ? ["mousemove", "mouseout", "click", "touchstart", "touchmove"] : [],
+        interaction: { mode: "nearest", axis: "x", intersect: false },
         layout: { padding: { top: 2, bottom: 2 } },
-        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        plugins: {
+          legend: { display: false },
+          tooltip: tip ? {
+            enabled: true,
+            displayColors: false,
+            callbacks: {
+              title: (items) => (items[0] ? formatDate(points[items[0].dataIndex].date) : ""),
+              label: (item) => `${formatNumber(item.parsed.y, tip.decimals)}${tip.unit ? " " + tip.unit : ""}`,
+            },
+          } : { enabled: false },
+        },
         scales: {
           x: {
             type: "category",
             grid: { display: false },
             border: { display: false },
             afterBuildTicks: (axis) => {
-              axis.ticks = edgeTicks(points.length, xCount).map((i) => ({ value: i }));
+              axis.ticks = edgeTicks(points.length, opts.xCount).map((i) => ({ value: i }));
             },
             ticks: {
               autoSkip: false,
@@ -106,7 +119,7 @@
             grid: { color: axisGrid, drawTicks: false },
             border: { display: false },
             ticks: {
-              maxTicksLimit: 3,
+              maxTicksLimit: opts.yTicks || 3,
               color: axisText,
               font,
               padding: 4,
@@ -115,7 +128,13 @@
           },
         },
       },
-    });
+    };
+  }
+
+  function drawChart(canvas, points) {
+    if (typeof Chart === "undefined") return;
+    const xCount = canvas.parentElement.clientWidth < 200 ? 2 : 3;
+    new Chart(canvas, chartConfig(points, { xCount, yTicks: 3, tooltip: null }));
   }
 
   function renderTile(ind) {
@@ -124,6 +143,7 @@
     node.dataset.id = ind.id;
 
     node.querySelector(".tile__title").textContent = ind.title;
+    node.querySelector(".tile__expand").setAttribute("aria-label", `Enlarge chart: ${ind.title}`);
     if (ind.mock !== true) node.querySelector(".badge-mock").remove();
     const sub = node.querySelector(".tile__subtitle");
     sub.textContent = ind.subtitle || "";
@@ -201,6 +221,7 @@
   window.WD = {
     indicator: (id) => (loaded ? (loaded.indicators || []).find((i) => i.id === id) : undefined),
     formatNumber,
+    chartConfig,
     onLoaded(fn) { if (loaded) fn(loaded); else listeners.push(fn); },
     /* Show a value fetched in the browser: "Real-time · HH:MM" replaces frequency and date. */
     setRealtime(id, value, time) {

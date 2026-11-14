@@ -32,7 +32,7 @@
       </div>
       <p class="tile__subtitle"></p>
       <p class="tile__value"><span class="tile__number"></span><span class="tile__unit"></span></p>
-      <div class="tile__chart"><canvas aria-hidden="true"></canvas></div>
+      <div class="tile__chart"><canvas aria-hidden="true"></canvas><button class="tile__expand" type="button" aria-label="Enlarge chart">⤢</button></div>
       <footer class="tile__footer">
         <p class="tile__when"><span class="tile__cadence"></span> · <time class="tile__date"></time></p>
         <p class="tile__source">Source: <a class="tile__source-link" target="_blank" rel="noopener noreferrer"></a></p>
@@ -40,8 +40,22 @@
     </article>
   </template>
 
+  <dialog id="expand" class="expand" aria-labelledby="expand-title">
+    <div class="expand__panel">
+      <div class="expand__head">
+        <h2 id="expand-title" class="expand__title"></h2>
+        <span class="badge-mock" title="Illustrative mock data – not real values">MOCK<span class="visually-hidden">: illustrative mock data, not real values</span></span>
+        <span class="expand__unit"></span>
+        <button class="expand__close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="expand__chart"><canvas aria-hidden="true"></canvas></div>
+      <p class="expand__source">Source: <a class="expand__source-link" target="_blank" rel="noopener noreferrer"></a></p>
+    </div>
+  </dialog>
+
   <script src="vendor/chart.umd.min.js"></script>
   <script src="app.js"></script>
   <script src="realtime.js"></script>
+  <script src="expand.js"></script>
 </body>
 </html>
