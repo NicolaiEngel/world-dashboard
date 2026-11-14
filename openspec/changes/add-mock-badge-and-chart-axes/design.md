@@ -23,6 +23,7 @@ Step 2's page (`site/app.js`) draws each mini chart with Chart.js 4.6.1. Axes ar
 - **Style:** 10 px uppercase, grey text on a light grey background, with colours in new CSS variables `--badge-bg` and `--badge-text`. It's neutral, because it marks data status, not good or bad.
 - **Accessibility:** the pill gets `title="Illustrative mock data – not real values"`, plus a visually hidden sentence inside it, so screen readers announce it.
 - The pill is rendered only when `ind.mock === true`.
+- **Phones (≤ 520 px):** the pill moves to its own line above the title (still adjacent to it). Beside the title, on a 158 px tile, it forced mid-word breaks such as "Temperatu-re" (found during implementation).
 - **Rejected:** striping or tinting the whole tile. It would compete with the chart, and CLAUDE.md asks for a badge next to the title.
 
 ### 2. Axes: Chart.js category scale with custom tick callbacks (no date adapter)

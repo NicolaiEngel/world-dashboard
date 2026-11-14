@@ -4,6 +4,22 @@ Source choices, fallbacks in use, and open questions. Newest entries go at the t
 
 ## Decisions
 
+### Tile revisions: MOCK badge, chart axes, no placeholder (2026-11-14)
+
+- **MOCK badge, moved forward from step 3.**
+  - Every tile whose indicator has `mock: true` shows a neutral grey "MOCK" pill, which disappears automatically once a tile has real data.
+  - It has a `title` tooltip and visually hidden text, so screen readers announce "illustrative mock data, not real values".
+  - On desktop the pill sits to the right of the title. On phones (≤ 520 px) it sits on its own line above the title, because beside the title it squeezed words like "Temperature" into mid-word breaks.
+  - Step 3 keeps the change line and the "x of 13 live" count.
+- **Axes on the mini charts.**
+  - The value axis has at most 3 ticks in compact form ("1.5", "425", "100K").
+  - It fits the plotted range instead of starting at zero, so recent movement stays visible; the tick labels make the range explicit.
+  - The date axis shows the first and last point (plus the middle one on wider charts): years on annual tiles, "Nov 2026"-style months on daily tiles.
+  - It's a category axis with no date adapter, so gaps such as weekends and missing CO₂ days aren't spaced in time. Good enough for a mini chart; the step 5 detail chart can use a time scale.
+  - Still no tooltips.
+- **Taller tiles so the axes fit:** 272 px on desktop (was 236) and 250 px on phones (was 214). Widths are unchanged, and the text didn't shrink.
+- **Empty placeholder slot removed.** It read as unfinished on a public page. New indicators simply appear as tiles.
+
 ### Step 2: static page and first deployment (2026-11-14)
 
 - **Chart library: Chart.js 4.6.1**, UMD build, vendored at `site/vendor/chart.umd.min.js`. Its MIT licence is in `site/vendor/chart.js-LICENSE.md` and in the file header.
