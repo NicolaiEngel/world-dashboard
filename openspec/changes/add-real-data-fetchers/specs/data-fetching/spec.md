@@ -17,7 +17,7 @@ A runner SHALL produce `data/dashboard.json` in the same format as `data/mock-da
 An indicator SHALL be fetched only from a source whose published terms were read and found to allow display on a public, non-commercial website. `DECISIONS.md` SHALL record, for each such source: the terms URL, the decisive quote, the licence, and the required attribution. An indicator whose source isn't cleared SHALL have no active fetcher and SHALL stay mock.
 
 #### Scenario: Source not cleared
-- **WHEN** a source's terms forbid redistribution or can't be confirmed (as for MSCI index levels without an MSCI licence)
+- **WHEN** a source's terms forbid redistribution or can't be confirmed (as for MSCI index levels, which is why they were dropped)
 - **THEN** the runner doesn't contact that source, the tile stays `mock: true`, and the run summary says "mock (licence not cleared)"
 
 #### Scenario: Licence record exists
@@ -55,6 +55,13 @@ If an indicator's fetch fails, times out, returns an empty series, or has a late
 #### Scenario: Implausible value
 - **WHEN** a fetched latest value lies outside the indicator's configured min–max range
 - **THEN** the indicator keeps its mock entry, and the log reports a range-check failure
+
+### Requirement: Estimates are labelled, projections are dropped
+For sources that publish estimates and projections, such as the IMF WEO, the series SHALL end at the current calendar year. If the latest year is an estimate, the entry's `caveat` SHALL say so and name the edition (for example "2026 is an IMF estimate (WEO October 2026)"). Years after the current one SHALL NOT be stored.
+
+#### Scenario: IMF series cut-off
+- **WHEN** the IMF DataMapper returns values from 1980 to 2031 and the current year is 2026
+- **THEN** the stored series runs 1980–2026, `as_of` is "2026", and the caveat names 2026 as an IMF estimate with the WEO edition
 
 ### Requirement: Series windows and dates
 Daily indicators SHALL store about the last 2 years of daily points with `YYYY-MM-DD` dates, or the last year where the free source offers no more (CoinGecko keyless). Annual indicators SHALL store their full available history with `YYYY` dates. Series SHALL be sorted oldest first, with no null values.

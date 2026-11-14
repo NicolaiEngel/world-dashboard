@@ -2,7 +2,7 @@
 
 ## Why
 
-Economy holds five of the seven daily tiles: markets, FX and Bitcoin. It's what changes from one visit to the next, so it should be the first thing you see.
+Economy holds the tiles that change from one visit to the next (exchange rates and Bitcoin), plus the growth comparison between advanced and developing economies once `add-real-data-fetchers` replaces the MSCI tiles. It should be the first thing you see.
 
 ## What Changes
 

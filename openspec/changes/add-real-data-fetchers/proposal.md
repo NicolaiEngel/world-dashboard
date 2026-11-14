@@ -20,7 +20,7 @@ All 13 tiles still show mock numbers. Step 4 replaces them with values fetched f
   | `conflict_deaths` | Our World in Data (UCDP-based chart, UCDP data CC BY 4.0), skipped if `nonRedistributable` |
   | `eur_usd`, `usd_cny` | Frankfurter, ECB provider (ECB: free use if the ECB is cited); USD/CNY = (EUR/CNY) ÷ (EUR/USD) |
   | `btc_usd` | CoinGecko keyless API, daily closes for the last 365 days, with the required CoinGecko attribution. Replaces Coinbase, whose market-data terms couldn't be confirmed |
-  | `msci_world`, `msci_em` | The MSCI World and MSCI Emerging Markets **index levels**, not ETF proxies. MSCI's terms forbid redistribution without its written consent, and no free API can grant that. **Both tiles stay MOCK until MSCI grants a licence.** The fetcher slot is prepared but disabled, and the tile wording changes from "ETF price" to the index |
+  | `gdp_growth_advanced`, `gdp_growth_developing` (**replace `msci_world`, `msci_em`**) | IMF World Economic Outlook via the keyless DataMapper API: real GDP growth (`NGDP_RPCH`) for "Advanced economies" (`ADVEC`) and "Emerging market and developing economies" (`OEMDC`), annual from 1980 up to the current year. The current year is an IMF estimate, so the caveat says so and names the WEO edition. Later projection years are dropped. Subject to the licence gate |
 
 - **Deploy runs the fetchers:** `deploy.yml` runs the fetch step before publishing, because GitHub runners have open internet. The fetchers also run by hand (`python -m pipeline.run`). The generated file isn't committed.
 - **The page** reads `data/dashboard.json` and falls back to `data/mock-data.json` if it's missing (for example, a local preview without fetching).
@@ -30,6 +30,7 @@ All 13 tiles still show mock numbers. Step 4 replaces them with values fetched f
   - The setting is remembered in `localStorage` and can be switched off.
   - Nothing outside our site is contacted until the visitor clicks.
   - **Bitcoin isn't real-time:** CLAUDE.md rules out CoinGecko in the browser, and Coinbase's terms couldn't be confirmed. Bitcoin shows the daily close from the deploy.
+- **MSCI tiles replaced:** MSCI's terms forbid redistribution without written consent, so the two MSCI tiles become the two IMF GDP-growth tiles. In the mock data and the generator, `msci_world` / `msci_em` become `gdp_growth_advanced` ("Advanced economies") and `gdp_growth_developing` ("Emerging & developing"). Subtitle "Real GDP growth, % per year", category Economy, cadence annual, unit "%", 1 decimal. Economy then has two annual and three daily tiles.
 - **Tests:** `pytest` for every fetcher and the runner, using small fixtures recorded from real responses (never invented). Range checks for each indicator.
 
 ## Capabilities
@@ -43,6 +44,7 @@ All 13 tiles still show mock numbers. Step 4 replaces them with values fetched f
 
 - `dashboard-page`: the page loads the fetched data file and falls back to the mock file.
 - `site-deployment`: the deploy runs the fetchers, and the published site contains the fetched data file.
+- `mock-data`: the indicator list swaps `msci_world` / `msci_em` for `gdp_growth_advanced` / `gdp_growth_developing`.
 
 ## Impact
 
@@ -51,10 +53,10 @@ All 13 tiles still show mock numbers. Step 4 replaces them with values fetched f
   - `tests/` (pytest plus recorded fixtures);
   - `requirements.txt` (`requests` and `pytest`);
   - `site/realtime.js`.
-- **Changed:** `scripts/make_mock_data.py` and `data/mock-data.json` (MSCI index wording), `site/app.js`, `site/index.html`, `site/styles.css`, `.github/workflows/deploy.yml`, `.gitignore`, `DECISIONS.md`, `README.md`.
+- **Changed:** `scripts/make_mock_data.py` and `data/mock-data.json` (two MSCI entries replaced by the two GDP-growth entries), `site/app.js`, `site/index.html`, `site/styles.css`, `.github/workflows/deploy.yml`, `.gitignore`, `DECISIONS.md`, `README.md`.
 - **Network:** these hosts are needed to record fixtures and check endpoints:
   - `api.worldbank.org`, `ourworldindata.org`, `gml.noaa.gov`, `pulse.climate.copernicus.eu`;
-  - `api.frankfurter.dev`, `api.coingecko.com`.
+  - `api.frankfurter.dev`, `api.coingecko.com`, `www.imf.org` (still to be added).
 
   These, plus the terms pages, are already allowed in the `world-dashboard` environment. The Climate Pulse CSV host may need adding once it's found.
 

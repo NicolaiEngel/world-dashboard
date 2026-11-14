@@ -34,7 +34,7 @@ pipeline/
     copernicus.py   # Climate Pulse daily global 2 m temperature anomaly CSV
     frankfurter.py  # ECB provider only, range query, base EUR, symbols USD,CNY
     coingecko.py    # keyless /coins/bitcoin/market_chart?vs_currency=usd&days=365&interval=daily
-    msci.py         # placeholder: disabled until an MSCI licence exists
+    imf.py          # DataMapper /api/v1/NGDP_RPCH/ADVEC/OEMDC, one call for both groups
 tests/
   fixtures/<source>/*  # trimmed real responses, recorded once
   test_<source>.py, test_run.py
@@ -65,7 +65,8 @@ tests/
   | World Bank | To confirm per indicator. The site terms defer to the Data Catalog's dataset licence (WDI is listed as CC BY 4.0) |
   | Copernicus Climate Pulse | To confirm. The CDS licence list includes CC BY 4.0, but the Climate Pulse page is a script-rendered app; the licence and attribution come from its data page or CSV header |
   | NOAA GML | To confirm from the CSV header's data-use statement |
-  | MSCI index levels | ✗ "Reproduction, redistribution or any other form of copying or transmission of the Data without MSCI's prior written consent is strictly prohibited." The MSCI Index API is a licensed product. Stays mock |
+  | IMF World Economic Outlook | To confirm on the IMF's copyright and usage page (`www.imf.org`, host still to be allowed) |
+  | MSCI index levels | ✗ "Reproduction, redistribution or any other form of copying or transmission of the Data without MSCI's prior written consent is strictly prohibited." The MSCI Index API is a licensed product. Tiles replaced by IMF GDP growth |
   | Coinbase | ✗ not confirmed: the terms page returns 403 to automated reads, and older terms restricted display to third parties. Not used |
 
 - "To confirm" sources get their quote recorded in `DECISIONS.md` (task 1.1) before their fetcher is enabled.
@@ -94,10 +95,15 @@ tests/
 - **CoinGecko:**
   - Keyless `market_chart`, 365 days, daily closes (about 1 call per deploy, well within the roughly 5 calls/min keyless limit).
   - Source "CoinGecko", linked to the Bitcoin page, as its attribution guide asks.
-- **MSCI World / MSCI EM index levels:**
-  - No fetcher is enabled.
-  - The mock wording changes from "URTH/EEM ETF price" to "MSCI World Index, USD" / "MSCI Emerging Markets Index, USD", with source "MSCI" linked to the index pages.
-  - If you obtain an MSCI licence, `msci.py` gets implemented against the licensed API, and its terms are recorded.
+- **IMF GDP growth (replaces the MSCI tiles):**
+  - One DataMapper request returns `NGDP_RPCH` for `ADVEC` and `OEMDC`, keyed by year.
+  - Keep years ≤ the current year and drop nulls.
+  - The WEO edition (for example "October 2026") is read from the API's metadata if it's there. Otherwise it's derived from the publication schedule and stated as such in `DECISIONS.md`.
+  - Caveat: "<year> is an IMF estimate (WEO <edition>)."
+  - Source "IMF World Economic Outlook", linked to the DataMapper indicator page.
+  - Range check −15…+20 %.
+  - **Mock data:** the generator replaces the two MSCI entries with plausible annual series from 1980 to 2026 (advanced about 1–3 %, developing about 3–6 %, with a 2009 and 2020 dip), using the existing shared random stream rules. The other series stay byte-identical: the old MSCI draws keep running, just unused, the same trick as for the annual temperature.
+  - **Rejected:** World Bank income groups (no current-year estimate) and CPB industrial production (licence unclear). Both are recorded in `DECISIONS.md` as alternatives.
 
 ### 5. Fetch at deploy; no data commits
 
@@ -134,10 +140,10 @@ tests/
 - [The Copernicus baseline offset is mis-cited] → Cite the C3S page and value in `DECISIONS.md`, and state it in the caveat. If unsure, keep the tile mocked.
 - [The container can't reach the sources] → Ask to allow the hosts listed in the proposal. If it's still blocked, verify via `workflow_dispatch` and record fixtures from the runner's output artifact.
 - [Real-time contacts third parties, under GDPR, from Germany] → Opt-in only, with the services named on the control. The privacy statement comes in the "before going public" step.
-- [MSCI licensing] → Tiles stay mock, clearly badged, until you obtain written consent or a licence from MSCI.
+- [IMF terms turn out restrictive] → The GDP tiles stay mock, and the fallback is World Bank GDP growth by income group (`NY.GDP.MKTP.KD.ZG`, `HIC` / `LMY`, CC BY 4.0) through the existing World Bank fetcher.
+- [CLAUDE.md still lists the MSCI tiles] → Recorded in `DECISIONS.md`; you may want to update CLAUDE.md's indicator list.
 - [CoinGecko terms change or rate-limit the keyless pool] → One call per run; on a 429 or error the tile falls back like any other source.
 
 ## Open Questions
 
-- Whether to request an MSCI licence (your call; it doesn't change this build).
 - Your one-time browser read of CoinGecko's API terms before `btc_usd` goes real.
