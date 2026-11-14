@@ -2,9 +2,9 @@
 
 ## 1. Mock data
 
-- [ ] 1.1 Add daily `temp_anomaly` (730 days, own seeded RNG, source Copernicus Climate Pulse, caveat kept) to `scripts/make_mock_data.py`. Verify: the generator runs and `temp_anomaly` has cadence `daily` with ISO day dates.
-- [ ] 1.2 Add `co2_ppm` (Climate, daily, ppm, 2 decimals, seasonal cycle on a trend, a few gaps, source NOAA GML Mauna Loa), placed right after `temp_anomaly`. Verify: the generator runs and the file lists 13 indicators.
-- [ ] 1.3 Regenerate `data/mock-data.json`. Verify:
+- [x] 1.1 Add daily `temp_anomaly` (730 days, own seeded RNG, source Copernicus Climate Pulse, caveat kept) to `scripts/make_mock_data.py`. Verify: the generator runs and `temp_anomaly` has cadence `daily` with ISO day dates.
+- [x] 1.2 Add `co2_ppm` (Climate, daily, ppm, 2 decimals, seasonal cycle on a trend, a few gaps, source NOAA GML Mauna Loa), placed right after `temp_anomaly`. Verify: the generator runs and the file lists 13 indicators.
+- [x] 1.3 Regenerate `data/mock-data.json`. Verify:
   - running the generator twice gives identical files;
   - `git diff` touches only the `temp_anomaly` and `co2_ppm` entries;
   - the other 11 series are byte-identical.
