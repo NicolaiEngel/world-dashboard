@@ -38,15 +38,15 @@
 
 ## 5. Deployment and docs
 
-- [ ] 5.1 Add `.github/workflows/deploy.yml` (push to `main` plus `workflow_dispatch`, official Pages actions at their current majors, `cp -rL site _site`, concurrency group `pages`). Verify: the YAML parses, and running the assemble step locally gives `_site/index.html` and a real (non-symlink) `_site/data/mock-data.json`.
-- [ ] 5.2 Create `DECISIONS.md` covering:
+- [x] 5.1 Add `.github/workflows/deploy.yml` (push to `main` plus `workflow_dispatch`, official Pages actions at their current majors, `cp -rL site _site`, concurrency group `pages`). Verify: the YAML parses, and running the assemble step locally gives `_site/index.html` and a real (non-symlink) `_site/data/mock-data.json`.
+- [x] 5.2 Create `DECISIONS.md` covering:
   - the Chart.js version and licence;
   - the symlink approach and its Windows caveat;
   - the Pages setting;
   - "Open questions": the schema_version wording, and the mock BTC/FX source URLs.
 
   Verify: every open question from design.md is listed.
-- [ ] 5.3 Add a short "Run locally" note to `DECISIONS.md` or a stub `README.md` (`cd site && python -m http.server`, plus the smoke check command). Verify: the commands run as written.
+- [x] 5.3 Add a short "Run locally" note to `DECISIONS.md` or a stub `README.md` (`cd site && python -m http.server`, plus the smoke check command). Verify: the commands run as written.
 
 ## Workflow follow-up
 
