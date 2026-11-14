@@ -21,6 +21,7 @@ We use [OpenSpec](https://github.com/Fission-AI/OpenSpec) so that we agree on wh
 - **Config over code.** Indicators, sections, titles and site settings live in YAML config. Adding an indicator from a supported source type should take a config entry only.
 - **Open, documented formats.** The config files and the data files each have a published JSON Schema in `schema/`. The generated data is served at `/data/*.json` on the site, so others can reuse it.
 - **Fetched, never typed in.** Every real value comes from an automated fetch of a public source. No hand-entered numbers. The only exception is the MVP's mock data, which is always labelled MOCK on the page. If an indicator has no fetchable source, leave it out and record that in `DECISIONS.md`.
+- **Licence-cleared sources only.** Fetch a source only after its terms have been read and confirm that public display on this site is allowed. Record the terms URL, the decisive quote, the licence and the required attribution in `DECISIONS.md`, and show that attribution on the tile. A source whose terms forbid redistribution, or can't be confirmed, isn't used; its tile stays MOCK or is replaced. (This is why MSCI index data and Coinbase market data aren't used.)
 - **Honest about data age.** Most indicators are annual and years old. Never make annual data look live.
 - **Neutral presentation.** No colour coding of "good" or "bad" changes. Show the direction and size of a change in the same neutral style for every indicator.
 - **Free to run.** Default setup needs no paid services and no API keys.
@@ -45,14 +46,14 @@ If a deployment breaks the live page, fixing or reverting it comes before any ne
 
 **The MVP in one sentence:** a single page where you can see in 10 seconds how the world is doing. It has 13 identical tiles grouped by category, each showing its value, its change, a mini chart, the date and the source.
 
-**What moves daily, and what doesn't.** Seven tiles change every day:
-- markets, FX and Bitcoin;
+**What moves daily, and what doesn't.** Five tiles change every day:
+- FX (EUR/USD, USD/CNY) and Bitcoin;
 - **daily** global temperature;
 - **daily** CO₂ concentration.
 
-These give the page its daily pulse, the way an energy monitor feels "live". The other six tiles (child mortality, life expectancy, drinking water, population, fertility, conflict deaths) are annual by nature: they come from registries and surveys and are published 1–3 years late. Don't dress them up as daily. They show their update frequency and date clearly, and they're there for long-run context.
+These give the page its daily pulse, the way an energy monitor feels "live". The other eight tiles (GDP growth for advanced and for emerging & developing economies, child mortality, life expectancy, drinking water, population, fertility, conflict deaths) are annual by nature: they come from registries and surveys and are published 1–3 years late. Don't dress them up as daily. They show their update frequency and date clearly, and they're there for long-run context.
 
-**Data contract:** `data/mock-data.json` (`schema_version: 1`, made by `scripts/make_mock_data.py`) defines the format.
+**Data contract:** `data/mock-data.json` (`schema_version: 2`, made by `scripts/make_mock_data.py`) defines the format.
 - **Top level:** `categories` (in display order) and a list of `indicators`.
 - **Each indicator:** `id`, `title`, `subtitle` (the one-line definition), `category`, `cadence` (`daily` or `annual`), `unit`, `decimals`, `source` (name and url), `as_of`, `mock`, an optional `caveat`, and `series` (a list of date/value pairs).
 - **Real fetchers** emit exactly the same format with `mock: false`. Don't change the format during the MVP without asking us.
@@ -65,8 +66,8 @@ These give the page its daily pulse, the way an energy monitor feels "live". The
 |---|---|---|---|
 | 1 | **A sketch of the page** | done | Wireframe (FigJam, Implementation Steps page) plus the mock data file and its generator. Only check that both are in the repo. |
 | 2 | **"It looks like a dashboard"** | ~75 min | A static page in `site/` (`index.html` + JS + CSS, no build step, chart library vendored in `site/vendor/`) that reads `mock-data.json`. It renders the header, the category headings and the 13 identical tiles from the wireframe, each with its value, mini chart, frequency, date and source link, in light mode. Most of the layout and styling work happens here. **Also add the deploy workflow** (`.github/workflows/deploy.yml`): on every push to `main` it publishes `site/`, plus the data file, to GitHub Pages using the official Pages actions. Before merging, tell us the one setting to change (Settings → Pages → Source: "GitHub Actions"). **Milestone: first version online.** |
-| 3 | **"I can see the trend at a glance"** | ~30 min | The change line on every tile (plain grey; comparison rules under Site design), the MOCK badges, and the "x of 13 live" count in the header. Compute the count from the data, don't hard-code it. **Milestone: the complete experience exists, all on mock numbers.** |
-| 4 | **"The numbers are real"** | ~2 h | Replace the mocks tile by tile, highest visibility first: **(a)** exchange rates and Bitcoin, fetched **in real time in the browser behind the opt-in control** (see "Real-time data in the browser"); no Python is needed for these; **(b)** the World Bank tiles (child mortality, life expectancy, drinking water, population, fertility), where one generic fetcher fills all five; **(c)** daily temperature (Copernicus Climate Pulse), daily CO₂ (NOAA GML) and conflict deaths (Our World in Data); **(d)** the MSCI ETF proxies. The fetchers for (b)–(d) run by hand and write the data file. **Time-box each tile to about 15 minutes.** A tile that still misbehaves keeps its mock data and MOCK badge, gets a note in `DECISIONS.md`, and you move on. |
+| 3 | **"I can see the trend at a glance"** | ~30 min | The change line on every tile (plain grey; comparison rules under Site design) and the "x of 13 live" count in the header. (The MOCK badges were already added after step 2.) Compute the count from the data, don't hard-code it. **Milestone: the complete experience exists, all on mock numbers.** |
+| 4 | **"The numbers are real"** | ~2 h | Replace the mocks tile by tile, highest visibility first: **(a)** exchange rates, fetched **in real time in the browser behind the opt-in control** (see "Real-time data in the browser"), plus their stored daily series, and Bitcoin's daily series from CoinGecko; **(b)** the World Bank tiles (child mortality, life expectancy, drinking water, population, fertility), where one generic fetcher fills all five; **(c)** daily temperature (Copernicus Climate Pulse), daily CO₂ (NOAA GML) and conflict deaths (Our World in Data); **(d)** GDP growth for advanced and for emerging & developing economies (IMF World Economic Outlook), replacing the MSCI tiles. The fetchers run in every deploy (and by hand with `python -m pipeline.run`) and write `data/dashboard.json`, which isn't committed; the page falls back to `data/mock-data.json`. **Time-box each tile to about 15 minutes.** A tile that still misbehaves keeps its mock data and MOCK badge, gets a note in `DECISIONS.md`, and you move on. |
 | 5 | **"Tell me more"** | ~45 min | Clicking a tile opens the long-run chart, a sentence on what the indicator means, and its caveats (e.g. the Paris temperature definition). |
 | 6 | **"Here's the link"** | ~30 min | It's already online, so this step is a final check of the live page (phone and desktop, all tiles, the real-time values, the detail view), fixes for anything that looks off, and a demo run-through. |
 
@@ -87,8 +88,8 @@ These give the page its daily pulse, the way an energy monitor feels "live". The
 ## Architecture (after the MVP)
 
 During the MVP, keep it simple:
-- a static page that reads one data file, `data/mock-data.json`, and later the real data in the same format;
-- small Python fetchers that you run by hand and that write that file;
+- a static page that reads one data file: `data/dashboard.json` (real data, same format as the mock file), falling back to `data/mock-data.json`;
+- small Python fetchers in `pipeline/` that run during each deploy (or by hand) and write that file;
 - a simple deploy workflow that publishes `site/` to GitHub Pages on every push to `main`, from step 2 on. The daily scheduled refresh comes later.
 
 The architecture below is the target once the MVP works.
@@ -119,13 +120,12 @@ Some tiles can fetch their value directly from the source in the visitor's brows
 
 How it works:
 - The page **always loads the stored data first**: mock data in the MVP, the daily snapshot later. Nothing is fetched from outside sources by default.
-- **Opt-in only:** a small, clearly worded control in the header, e.g. "Load real-time prices (connects to Coinbase and Frankfurter)". Only after the visitor clicks it does the page fetch real-time values for eligible tiles. The choice may be remembered in `localStorage` so a returning visitor doesn't have to click again. Provide a way to switch it off.
+- **Opt-in only:** a small, clearly worded control in the header: "Load real-time exchange rates (connects to Frankfurter)". Only after the visitor clicks it does the page fetch real-time values for eligible tiles. The choice may be remembered in `localStorage` so a returning visitor doesn't have to click again. Provide a way to switch it off.
 - If a real-time fetch fails or times out (about 5 seconds), the tile keeps the stored value. Nothing breaks.
 - **Later alternative:** the scheduled workflow fetches these prices every hour or so and publishes them with the site. Visitors then get near-real-time values without their browser contacting any third party. If we choose this, the opt-in control goes away.
 - A tile showing a real-time value says so in its footer, e.g. "Real-time · 14:32". Use the word "real-time" for this, because "live" already means "real data, not mock" in the header count.
 - **Be polite to the sources.**
-  - Fetch once when real-time is switched on, and once per page load after that.
-  - Only Bitcoin refreshes again, every 60 seconds, and only while the tab is visible (Page Visibility API).
+  - Fetch once when real-time is switched on, and once per page load after that. No periodic refresh: ECB rates change once per working day.
   - Avoid duplicate requests by putting all currencies in one call.
 - The sparkline and the comparison value come from the stored series. If the source offers history in one cheap call, they can come from there instead.
 - Post-MVP config: an optional `realtime:` block on an indicator entry (provider, params, refresh interval). Tiles without it use stored data only.
@@ -134,9 +134,9 @@ Classification for the MVP tiles (check CORS and terms live before relying on it
 
 | Tile | Real-time? | How |
 |---|---|---|
-| `btc_usd` | **Yes** | Coinbase public spot price `api.coinbase.com/v2/prices/BTC-USD/spot`. Keyless, documented CORS support. Daily history: try Coinbase Exchange daily candles. If they aren't browser-accessible, use the stored series. Don't use CoinGecko in the browser: its keyless pool is only a few calls per minute and its docs mention CORS errors |
+| `btc_usd` | No | Daily close from CoinGecko's keyless API in the pipeline, with CoinGecko attribution. Coinbase isn't used: its market-data terms couldn't be confirmed to allow public display. Don't use CoinGecko in the browser: its keyless pool is only a few calls per minute and its docs mention CORS errors |
 | `fx_eur_usd`, `fx_usd_cny` | **Yes** | Frankfurter (`api.frankfurter.dev`): keyless, CORS, open source, soft fair-use limits. Request ECB as the provider so values match the ECB reference rates. One call returns both rates, and a range query returns the history. ECB rates update once per working day, so fetch once per page load. Forks with heavy traffic can self-host Frankfurter (Docker) |
-| `msci_world`, `msci_em` | No | There's no keyless, CORS-enabled ETF price source with terms that clearly allow it. Stays in the daily pipeline |
+| `gdp_growth_advanced`, `gdp_growth_developing` | No | Annual IMF data gains nothing from real-time fetching |
 | `temp_anomaly`, `co2_ppm` | Check | Both are daily but published with a lag of about 1–2 days. Fetch them in the browser only if the CSV endpoints meet all five conditions (check CORS especially). Otherwise they come from the fetchers / daily pipeline. Either way the tile is daily |
 | all annual tiles | No | Annual data gains nothing from real-time fetching |
 
@@ -196,7 +196,7 @@ Write JSON Schemas for all three files in `schema/`. Validate them in CI, and do
 
 ## Default indicators
 
-**MVP scope (13 tiles):** `msci_world`, `msci_em`, `fx_eur_usd`, `fx_usd_cny`, `btc_usd`, `temp_anomaly`, `co2_ppm`, `child_mortality`, `life_expectancy`, `drinking_water`, `population`, `fertility`, `conflict_deaths`. In the mock data file some ids are spelled differently (`eur_usd`, `usd_cny`), so keep whichever spelling the data file uses. All other rows below are parked until after the MVP; on the FigJam board they're marked "⏸ Not in today's MVP".
+**MVP scope (13 tiles):** `gdp_growth_advanced`, `gdp_growth_developing`, `fx_eur_usd`, `fx_usd_cny`, `btc_usd`, `temp_anomaly`, `co2_ppm`, `child_mortality`, `life_expectancy`, `drinking_water`, `population`, `fertility`, `conflict_deaths`. In the mock data file some ids are spelled differently (`eur_usd`, `usd_cny`), so keep whichever spelling the data file uses. The MSCI World / MSCI EM tiles were dropped: MSCI's terms forbid redistribution of index data without its written consent. All other rows below are parked until after the MVP; on the FigJam board they're marked "⏸ Not in today's MVP".
 
 Before writing an adapter or config entry, check each endpoint live and confirm that it returns world-level data. Docs and URLs drift. If a primary source fails, use the fallback and record it in `DECISIONS.md`. **Never invent or estimate values.**
 
@@ -205,11 +205,11 @@ Before writing an adapter or config entry, check each endpoint live and confirm 
 | `temp_anomaly` | Temperature above pre-industrial | **Daily** global surface air temperature anomaly vs **1850–1900** (tile). Detail view adds the long-term warming level: the Paris-relevant figure, a multi-decade average or trend, not one day | Copernicus **Climate Pulse** (ERA5): daily global series, about 2 days behind real time, downloadable as CSV. For the long-term level, use the C3S global temperature trend monitor (30-year trend) | **Check the baseline.** Climate Pulse was launched relative to 1991–2020, with 1850–1900 announced for a later update. Use the pre-industrial series if it exists now; otherwise convert using C3S's documented offset (verify the value) and say so in caveats. Never mix baselines silently. A single day is noisy and can sit far above the long-term level, so the caveat must say that Paris refers to long-term averages. Fallback: the monthly ERA5 series (OWID `global-temperature-anomalies-by-month`), labelled monthly |
 | `co2_ppm` | CO₂ concentration | **Daily** atmospheric CO₂ at Mauna Loa, ppm | NOAA Global Monitoring Laboratory (GML), Mauna Loa daily means (find the current CSV under the CO₂ trends pages) | Daily values have gaps (instrument or weather), so show the latest available day with its date. Strong seasonal cycle, so compare with the same day a year earlier. Fallback: NOAA monthly means, labelled monthly |
 | `child_mortality` | Under-5 mortality | Deaths per 1,000 live births | World Bank `SH.DYN.MORT`, `WLD` (UN IGME) | OWID `child-mortality` |
-| `msci_world` | MSCI World | Daily close, 1-year chart | Proxy: iShares MSCI World ETF **URTH** | MSCI index levels need a licence, so label it "ETF proxy". Check the terms of the price source: it must allow use in a public project. This is the weakest licensing link, so flag it if unclear |
-| `msci_em` | MSCI Emerging Markets | Daily close, 1-year chart | Proxy: iShares MSCI EM ETF **EEM** | Same as above |
-| `fx_usd_cny` | USD–CNY | Daily, **real-time in browser** | Frankfurter with ECB as provider (browser). Pipeline/fallback: ECB data API (`data-api.ecb.europa.eu`, EXR) | The currency is the yuan/renminbi (CNY). ECB rates are EUR-based, so USD/CNY = (EUR/CNY) ÷ (EUR/USD) |
+| `gdp_growth_advanced` | GDP growth, advanced economies | Real GDP growth, % per year, annual from 1980 to the current year | IMF World Economic Outlook, DataMapper API `NGDP_RPCH`, group `ADVEC` | The current year is an IMF estimate: say so in the caveat and name the WEO edition; drop projection years. Licence: confirm the IMF's copyright and usage terms first. Fallback: World Bank `NY.GDP.MKTP.KD.ZG`, `HIC` (CC BY 4.0) |
+| `gdp_growth_developing` | GDP growth, emerging & developing economies | As above | IMF WEO, `NGDP_RPCH`, group `OEMDC` | As above. Fallback: World Bank `LMY` |
+| `fx_usd_cny` | USD–CNY | Daily, **real-time in browser** | Frankfurter with ECB as provider (browser and pipeline). Pipeline/fallback: ECB data API (`data-api.ecb.europa.eu`, EXR) | The currency is the yuan/renminbi (CNY). ECB rates are EUR-based, so USD/CNY = (EUR/CNY) ÷ (EUR/USD) |
 | `fx_eur_usd` | EUR–USD | Daily, **real-time in browser** | As for USD–CNY | |
-| `btc_usd` | Bitcoin in USD | **Real-time in browser**, refresh 60 s while visible | Coinbase public spot price (browser). History: Coinbase Exchange daily candles, or the stored series | Check the terms of use and the attribution requirements |
+| `btc_usd` | Bitcoin in USD | Daily close, 1-year chart | CoinGecko keyless API (`market_chart`, 365 days), in the pipeline | Attribution to CoinGecko is required. Read CoinGecko's full API terms in a browser before going real (the page blocks automated reads). Not real-time |
 | `amr` | Antibiotic resistance | SDG 3.d.2: % of bloodstream infections due to MRSA and to *E. coli* resistant to 3rd-generation cephalosporins (two series) | UN SDG API (series `SH_BLD_MRSA`, `SH_BLD_ECOLI`), data from WHO GLASS. OWID mirrors it | Use a world aggregate only if the source publishes one. Otherwise show WHO/UN regional values. **Don't compute a world figure ourselves.** Caveat: comes only from reporting countries and isn't fully representative |
 | `fertility` | Total fertility rate | Births per woman | World Bank `SP.DYN.TFRT.IN`, `WLD` | UN WPP via OWID |
 | `suicide_rate` | Suicide rate | Per 100,000, age-standardised | World Bank `SH.STA.SUIC.P5`, `WLD` (WHO) | Lags several years, so make the "as of" year prominent |
@@ -228,21 +228,19 @@ OWID chart API: add `.csv` or `.metadata.json` to a grapher URL, use `?v=1&csvTy
 
 The reference is the wireframe on the **Implementation Steps** page of the FigJam board "Wold Dashboard" (`https://www.figma.com/board/6RL68x1YCVLlatUUr3idBF/Wold-Dashboard`). If you have Figma access, check it there. Otherwise:
 
-- **Header:** "World Dashboard", the data date and an "x of 13 live" count. The 🌐 ✏️ 👤 icons on the right are placeholders and do nothing yet.
-- **Category headings, with the tiles in three rows:**
-  - Climate (temperature, CO₂), Health, Living standards, Stability;
-  - Economy;
-  - Demography, plus an empty slot for later indicators.
+- **Header:** "World Dashboard" and an "x of 13 live" count. No page-wide data date: every tile shows its own date. The 🌐 ✏️ 👤 icons on the right are placeholders and do nothing yet.
+- **Category headings, in this order:** Economy; Climate (temperature, CO₂); Health; Living standards; Stability; Demography. No empty placeholder slot.
 
-  With CO₂ added, the first row holds six tiles instead of the wireframe's five. Let the grid wrap naturally rather than shrinking the tiles: all tiles stay the same size.
-- **All tiles use one identical format:** the same size; the title with a MOCK badge while the data is mocked; a one-line definition; the big value; the change line; a mini chart; and a footer with update frequency, date and source link. Titles must fit, so "MSCI EM", not "MSCI Emerging Markets".
+  Let the grid wrap naturally rather than shrinking the tiles: all tiles stay the same size.
+- **All tiles use one identical format:** the same size; the title with a MOCK badge while the data is mocked; a one-line definition; the big value; the change line; a mini chart; and a footer with update frequency, date and source link. Titles must fit: use short titles such as "Emerging & developing" and put the detail in the definition line.
 - **Change line:**
-  - markets, FX and Bitcoin compare with the previous trading day;
+  - FX and Bitcoin compare with the previous day with data;
   - **temperature and CO₂ compare with the same day one year earlier**, because day-to-day changes in these are weather or seasonal noise;
   - annual tiles compare with 10 years earlier;
   - a real-time value compares with the last stored daily close.
   Write the comparison into the change line, e.g. "+0.21 °C vs same day 2025".
 - **Neutral colours:** no good/bad colouring. The change line is plain grey and every mini chart is the same blue.
+- **Mini charts** have labelled value and date axes (a few compact ticks each), no tooltips.
 - **Light mode only for the MVP.** Ignore the dark styling in the wireframe and the Design Vision Board. Dark mode is a later feature. Keep all colours in CSS variables from the start, so adding a dark theme later (and forks re-theming) only means adding a second set of variables. The page must work on a phone and be readable without hovering.
 - **Detail view (step 5):** clicking a tile opens the long-run chart, a sentence on what the indicator means, and its caveats.
 - **Real-time tiles:** the footer shows "Real-time · HH:MM" and the date the value was fetched.
@@ -271,9 +269,8 @@ The site is reachable by anyone from its first deployment. "Going public" here m
    - Copernicus data requires clear and visible attribution to the Copernicus programme (Copernicus Climate Change Service), so put it on the tile, not in a hidden footer.
    - List all sources with their licences in the detail view and on an "About the data" section.
 6. **Data source terms:**
-   - Read and summarise for us the terms for Coinbase (its Market Data Terms of Use) and Frankfurter.
-   - For the **MSCI ETF prices**, find a source whose terms clearly allow display on a public site. If there is none, recommend dropping or hiding these two tiles in the public version.
-   - Keep the "ETF proxy" label, and never use MSCI logos.
+   - Confirm that the "Data sources and licences" table in `DECISIONS.md` is complete and current for every source (see the "Licence-cleared sources only" principle), including CoinGecko, Frankfurter/ECB and the IMF.
+   - MSCI data isn't used (no licence). Never use MSCI names, data or logos.
 7. **Disclaimer** in the footer: the data is shown without guarantee, can be delayed or wrong, and isn't financial advice.
 8. **Code licence:** add `LICENSE` (MIT unless we decide otherwise).
 
