@@ -48,7 +48,12 @@ Step 2's page (`site/app.js`) draws each mini chart with Chart.js 4.6.1. Axes ar
 - **Why:** axis labels below 10 px aren't readable on a phone, and CLAUDE.md says to let the grid grow rather than shrink content.
 - **Phone extras:** `maxTicksLimit` for x drops to 2 below 200 px chart width, so labels don't overlap. The y-axis width is capped by the compact format.
 
-### 4. Tests
+### 4. Empty slot removed
+
+- Delete the slot-creation branch in `render()`, plus the `.tile-slot` CSS and the `--color-slot-border` variable.
+- Nothing else depends on it.
+
+### 5. Tests
 
 `tests/smoke_page.mjs` gains these checks:
 - each tile's badge count matches its `mock` flag;
@@ -57,6 +62,7 @@ Step 2's page (`site/app.js`) draws each mini chart with Chart.js 4.6.1. Axes ar
 - y ticks span the plotted min and max;
 - daily x labels match `^[A-Z][a-z]{2} \d{4}$`;
 - annual x labels are years;
+- no `.tile-slot` element on the page;
 - at 360 px, no x tick labels overlap (compare `scale._labelItems` positions, or tick pixel gaps against label widths).
 
 Existing checks stay: uniform size, no overflow, own-origin requests only.

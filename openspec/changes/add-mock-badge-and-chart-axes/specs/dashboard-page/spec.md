@@ -63,3 +63,9 @@ A daily tile's mini chart SHALL show about the last year of its series. An annua
 #### Scenario: Axes on a phone
 - **WHEN** the page is shown at 360 px width
 - **THEN** the axis labels are visible and don't overlap each other or spill outside the tile
+
+## REMOVED Requirements
+
+### Requirement: Empty slot for later indicators
+**Reason**: An empty dashed tile reads as unfinished on a public page and carries no information. Decided after step 2 went live.
+**Migration**: None needed. New indicators appear as normal tiles when they're added to the data file. The page renders no placeholder.

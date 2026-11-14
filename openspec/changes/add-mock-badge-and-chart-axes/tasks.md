@@ -11,9 +11,13 @@
 - [ ] 2.2 Increase tile height (desktop 272 px, phone 250 px) and cap x ticks at 2 on narrow charts. Verify: screenshots at 390 px and 360 px show readable, non-overlapping axis labels, and tiles stay identical in size.
 - [ ] 2.3 Extend `tests/smoke_page.mjs`: each chart has visible x and y scales with ≥ 2 labelled ticks, y ticks span the plotted range, x labels match the year or "Mon YYYY" format, and x labels don't overlap at 360 px. Verify: the smoke check passes locally, and fails when the axes are hidden again.
 
-## 3. Docs
+## 3. Empty slot
 
-- [ ] 3.1 Add a `DECISIONS.md` entry: the badge moved from step 3 into this change, axes are on mini charts (y not starting at zero, category x axis without a date adapter), and the new tile heights. Verify: the entry exists and matches design.md.
+- [ ] 3.1 Remove the empty dashed slot from `site/app.js`, plus its CSS (`.tile-slot`, `--color-slot-border`), and change the smoke check to assert that no `.tile-slot` exists. Verify: the Demography group shows only its two tiles, and the smoke check passes.
+
+## 4. Docs
+
+- [ ] 4.1 Add a `DECISIONS.md` entry: the badge moved from step 3 into this change, axes are on mini charts (y not starting at zero, category x axis without a date adapter), the new tile heights, and the removal of the empty slot. Verify: the entry exists and matches design.md.
 
 ## Workflow follow-up
 
