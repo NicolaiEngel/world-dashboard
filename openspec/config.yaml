@@ -2,6 +2,30 @@ schema: spec-driven
 githubCopilot:
   cloudAgent: false
 
+context: |
+  ## Goal
+
+  A single-page dashboard you can open every day to see the state of the world at a glance. It shows a small set of global indicators covering the planet, people, economy and conflict. Each indicator gets a card with its latest value, recent trend, how old the data is, and its source.
+
+  For now it is a personal project for two friends. It must be **publishable as an open template**: anyone should be able to fork the repo, choose their own indicators and wording by editing config files (no code changes for common cases), and have their own copy running for free within minutes. Every design choice should make that easy.
+
+  **Today's target is an MVP, built in a one-day vibe-coding workshop.** The "MVP plan" section is what to build now. The Architecture, Configuration and community sections describe where the project goes *after* the MVP. Don't build those parts today, but don't make choices that block them either.
+
+  ## Principles
+
+  - **Config over code.** Indicators, sections, titles and site settings live in YAML config. Adding an indicator from a supported source type should take a config entry only.
+  - **Open, documented formats.** The config files and the data files each have a published JSON Schema in `schema/`. The generated data is served at `/data/*.json` on the site, so others can reuse it.
+  - **Fetched, never typed in.** Every real value comes from an automated fetch of a public source. No hand-entered numbers. The only exception is the MVP's mock data, which is always labelled MOCK on the page. If an indicator has no fetchable source, leave it out and record that in `DECISIONS.md`.
+  - **Honest about data age.** Most indicators are annual and years old. Never make annual data look live.
+  - **Neutral presentation.** No colour coding of "good" or "bad" changes. Show the direction and size of a change in the same neutral style for every indicator.
+  - **Free to run.** Default setup needs no paid services and no API keys.
+  - **Privacy by default.** The site is public from its first deployment, and the operators are in Germany, so this applies from step 2. When the page loads, the browser contacts **only our own site**.
+    - Ship the chart library and any fonts as files inside `site/vendor/`, never from a CDN or Google Fonts.
+    - No analytics, no tracking, no embedded third-party widgets, no cookies.
+    - Calls to outside data sources from the browser happen only after the visitor explicitly asks for them (see "Real-time data in the browser").
+    - Reason: a visitor's IP address counts as personal data. LG München I (20.01.2022, 3 O 17493/20) awarded damages for sending visitors' IPs to Google via embedded fonts without consent.
+  - **Real-time where it scales, stored data everywhere else.** See "Real-time data in the browser".
+
 # Project context (optional)
 # Add only constraints that should guide OpenSpec artifacts and workflows.
 # Include constraints an agent cannot infer by reading the code.
