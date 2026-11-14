@@ -9,7 +9,6 @@
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   const $dashboard = document.getElementById("dashboard");
-  const $dataDate = document.getElementById("data-date");
   const $template = document.getElementById("tile-template");
 
   /* ISO date ("YYYY", "YYYY-MM" or "YYYY-MM-DD") -> "2026", "Nov 2026", "13 Nov 2026" */
@@ -149,11 +148,6 @@
     const indicators = data.indicators || [];
     const categories = data.categories || [];
 
-    // Header date: the most recent as_of. ISO strings compare correctly as text.
-    const latest = indicators.reduce((a, i) => (i.as_of > a ? i.as_of : a), "");
-    $dataDate.textContent = latest ? formatDate(latest) : "–";
-    $dataDate.dateTime = latest;
-
     $dashboard.replaceChildren();
     const charts = [];
     const groups = categories
@@ -184,7 +178,6 @@
   }
 
   function showLoadError() {
-    $dataDate.textContent = "–";
     const p = document.createElement("p");
     p.className = "load-error";
     p.setAttribute("role", "alert");

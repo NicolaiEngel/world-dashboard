@@ -4,6 +4,11 @@ Source choices, fallbacks in use, and open questions. Newest entries go at the t
 
 ## Decisions
 
+### Economy first, no header date (2026-11-14)
+
+- **Category order:** Economy, Climate, Health, Living standards, Stability, Demography. Economy holds the tiles that change between visits, so it comes first. This departs from the wireframe's row plan, which put it second; CLAUDE.md is updated to match.
+- **No header date:** "Data as of …" is removed from the header. Every tile shows its own date, and one page-wide date was misleading when tiles range from yesterday to 2022. The header keeps the title and the placeholder icons.
+
 ### Tile revisions: MOCK badge, chart axes, no placeholder (2026-11-14)
 
 - **MOCK badge, moved forward from step 3.**

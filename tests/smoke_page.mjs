@@ -54,6 +54,9 @@ async function openPage(viewport, { blockData = false } = {}) {
   check(tiles === EXPECTED_TILES, `${tiles} tiles rendered (expected ${EXPECTED_TILES})`);
   check(tiles === data.indicators.length, `one tile per indicator in the data (${data.indicators.length})`);
 
+  const header = await page.locator(".site-header").innerText();
+  check(/World Dashboard/.test(header) && !/Data as of/i.test(header), "header shows the title and no data date");
+
   const headings = await page.locator(".category__title").allTextContents();
   const expectedHeadings = data.categories.filter((c) => data.indicators.some((i) => i.category === c));
   check(JSON.stringify(headings) === JSON.stringify(expectedHeadings), `category order: ${headings.join(", ")}`);
