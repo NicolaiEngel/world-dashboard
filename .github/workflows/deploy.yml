@@ -1,4 +1,5 @@
-# MVP deploy: publish site/ (plus the data file) to GitHub Pages on every push to main.
+# MVP deploy: test, fetch real data, then publish site/ (plus the data files) to GitHub Pages
+# on every push to main.
 # One-time repo setting: Settings -> Pages -> Source: "GitHub Actions".
 # After the MVP this is replaced by build-and-deploy.yml (see CLAUDE.md, Architecture).
 name: Deploy to GitHub Pages
@@ -28,13 +29,30 @@ jobs:
       - name: Check out
         uses: actions/checkout@v5
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install pipeline dependencies
+        run: pip install -r requirements.txt
+
+      - name: Test pipeline (recorded fixtures, no network)
+        run: python -m pytest -q
+
+      - name: Fetch real data
+        # Never fails the deploy for a source error: failed indicators keep their mock data.
+        # The per-indicator summary goes to the job summary.
+        run: python -m pipeline.run --out data/dashboard.json
+
       - name: Assemble site
         # -L follows the site/data -> ../data symlink, so the data file is copied in for real.
         run: |
           rm -rf _site
           cp -rL site _site
           test -f _site/index.html
-          test -f _site/data/mock-data.json && test ! -L _site/data
+          test -f _site/data/mock-data.json && test -f _site/data/dashboard.json && test ! -L _site/data
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
