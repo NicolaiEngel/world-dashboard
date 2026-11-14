@@ -1,0 +1,12 @@
+{
+ "chart": {
+  "title": "Deaths in state-based conflicts by region"
+ },
+ "columns": {
+  "number_deaths_ongoing_conflicts__conflict_type_state_based": {
+   "titleShort": "Deaths in state-based conflicts",
+   "nonRedistributable": null,
+   "citationShort": "Uppsala Conflict Data Program (2026); geoBoundaries (2023); Peace Research Institute Oslo (2017) – processed by Our World in Data"
+  }
+ }
+}
